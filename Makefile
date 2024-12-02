@@ -1,8 +1,9 @@
 export last_commit_hash=$(shell git log --format="%H" -n 1)
-export last_plot_dir_name=$(shell ls -lt ./plots/ | tail -1 | awk '{print $$NF}')
+export last_plot_dir_name=$(shell ls -lt ./plots/ | head -2 | tail -1 | awk '{print $$NF}')
+#export last_plot_dir_name=latest
 
 # rename plot files to its commit hashes within commit
-git_commit:	
+git_commit:
 	@read -p "Enter commit comments:" commit_comments ; \
         git commit -m "$$commit_comments" ; \
 		export last_commit_hash=$(shell git log --format="%H" -n 1) ; \
