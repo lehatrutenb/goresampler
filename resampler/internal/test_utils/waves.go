@@ -38,7 +38,7 @@ func (sw SinWave) GetIn(ind int) (int16, error) {
 	}
 
 	x := float64(ind) * (sw.rightB - sw.leftB) / float64(sw.inResRate)
-	return utils.FFloat16ToS16(math.Sin(x)), nil
+	return utils.FFloatToS16(math.Sin(x)), nil
 }
 
 func (sw SinWave) GetOut(ind int) (int16, error) {
@@ -47,7 +47,7 @@ func (sw SinWave) GetOut(ind int) (int16, error) {
 	}
 
 	x := float64(ind) * (sw.rightB - sw.leftB) / float64(sw.outResRate)
-	return utils.FFloat16ToS16(math.Sin(x)), nil
+	return utils.FFloatToS16(math.Sin(x)), nil
 }
 
 func (sw SinWave) String() string {
