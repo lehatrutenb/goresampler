@@ -41,7 +41,7 @@ type TestResult struct {
 	Resampeled []int16
 	InWave     []int16
 	CorrectW   []int16
-	SDur       time.Duration `json:"SDurMS"` // summary duration
+	SDur       time.Duration `json:"MSDurMS"` // mean summary duration
 }
 
 type TestObj struct {
@@ -60,7 +60,6 @@ func (TestObj) New(tw TestWave, tr TestResampler, runAmt int) TestObj {
 func (tErr *TestErr) recalcErr(got, corr int16) {
 	tErr.ErrSqed += float64(got-corr) * float64(got-corr)
 
-	log.Println(math.Abs(float64(got-corr)), math.Abs(float64(corr))/100.0*5.0)
 	if math.Abs(float64(got-corr)) > math.Abs(float64(corr))/100.0*1.0 {
 		tErr.SqProc1++
 	}

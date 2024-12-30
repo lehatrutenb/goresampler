@@ -28,15 +28,33 @@ func FFloatS16ToS16(x float64) int16 {
 }
 
 // same mark as for S16ToFloat
-func Float16ToS16(x float32) int16 {
+func FloatToS16(x float32) int16 {
 	return int16(math.Max(math.Min(float64(x*32768.0), 32767.0), -32768.0) + math.Copysign(0.5, float64(x)))
 }
 
-func FFloat16ToS16(x float64) int16 {
+func AFloatToS16(xs []float32) []int16 {
+    res := make([]int16, len(xs))
+    for i, x := range xs {
+        res[i] = FloatToS16(x)
+    }
+    return res
+}
+
+func AS16ToFloat(xs []int16) []float32 {
+    res := make([]float32, len(xs))
+    for i, x := range xs {
+        res[i] = S16ToFloat(x)
+    }
+    return res
+}
+
+
+
+func FFloatToS16(x float64) int16 {
 	return int16(math.Max(math.Min(float64(x*32768.0), 32767.0), -32768.0) + math.Copysign(0.5, float64(x)))
 }
 
-func Float16ToFloatS16(x float32) float32 {
+func FloatToFloatS16(x float32) float32 {
 	return float32(math.Max(math.Min(float64(x), 1.0), -1.0) * 32768.0)
 }
 

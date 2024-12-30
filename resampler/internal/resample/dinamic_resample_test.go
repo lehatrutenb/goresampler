@@ -1,13 +1,12 @@
-package main
+package resample
 
 import (
 	"errors"
-	//"log"
-	"resampler/internal/resample"
 	testutils "resampler/internal/test_utils"
-	//"testing"
+	"testing"
+
+	"github.com/stretchr/testify/assert"
     "fmt"
-	//"github.com/stretchr/testify/assert"
 )
 
 type resamplerSpline struct {
@@ -21,7 +20,7 @@ func (rsm resamplerSpline) String() string {
 }
 
 func (rsm *resamplerSpline) Resample(inp []int16) error {
-    sw := resample.SplineWave{}.New()
+    sw := SplineWave{}.New()
     sw.SetInOutWave(inp, rsm.inRate, rsm.outRate)
 	sw.ResampleSpline()
 	rsm.resampled = sw.GetOutWave()
@@ -35,7 +34,15 @@ func (rsm resamplerSpline) Get(ind int) (int16, error) {
 	return rsm.resampled[ind], nil
 }
 
-func main() {
+func TestResampleSpline48To32(t *testing.T) {
 	var tObj testutils.TestObj = testutils.TestObj{}.New(testutils.SinWave{}.Init(0, 5, 48000, 32000), testutils.TestResampler(&resamplerSpline{inRate: 48000, outRate: 32000}), 10)
-	tObj.Run()
+	err := tObj.Run()
+	if !assert.NoError(t, err, "failed to run resampler") {
+		t.Error(err)
+	}
+
+	err = tObj.Save("latest")
+	if !assert.NoError(t, err, "failed to save test results") {
+		t.Error(err)
+	}
 }

@@ -40,7 +40,6 @@ func (tObj TestObj) drawPlots(baseFName string) error {
 	}
 	sCorr.GlyphStyle.Radius = vg.Points(1)
 	sCorr.GlyphStyle.Color = color.RGBA{R: 255}
-	p.Add(sCorr)
 
 	sRes, err := plotter.NewScatter(createPointsFromData(tObj.Tres.Resampeled))
 	if err != nil {
@@ -50,11 +49,6 @@ func (tObj TestObj) drawPlots(baseFName string) error {
 	sRes.GlyphStyle.Radius = vg.Points(1)
 	sRes.GlyphStyle.Color = color.RGBA{B: 255}
 	p.Add(sCorr, sRes)
-
-	err = plotutil.AddScatters(p, "Correct", createPointsFromData(tObj.Tres.CorrectW), "Resampled", createPointsFromData(tObj.Tres.Resampeled))
-	if err != nil {
-		panic(err)
-	}
 
 	if err := p.Save(30*vg.Inch, 12*vg.Inch, fmt.Sprintf("%s:plot.png", baseFName)); err != nil {
 		panic(err)

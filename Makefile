@@ -9,3 +9,6 @@ git_commit:
 		export last_commit_hash=$(shell git log --format="%H" -n 1) ; \
 		mv plots/$$last_plot_dir_name plots/$$last_commit_hash
 	-mkdir plots/latest
+
+runTest:
+	go test -count=1 ./resampler/internal/resample/
