@@ -3,7 +3,7 @@ export last_plot_dir_name=$(shell ls -lt ./plots/ | head -2 | tail -1 | awk '{pr
 #export last_plot_dir_name=latest
 
 # rename plot files to its commit hashes within commit
-git_commit:
+gitCommit:
 	@read -p "Enter commit comments:" commit_comments ; \
         git commit -m "$$commit_comments" ; \
 		export last_commit_hash=$(shell git log --format="%H" -n 1) ; \
@@ -11,4 +11,4 @@ git_commit:
 	-mkdir plots/latest
 
 runTest:
-	go test -count=1 ./resampler/internal/resample/
+	go test -count=1 -v ./resampler/internal/resample/
