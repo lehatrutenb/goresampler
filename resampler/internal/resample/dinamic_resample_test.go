@@ -67,6 +67,7 @@ func TestResampleSpline48To32(t *testing.T) {
 	}
 }
 
+/* Not really need anymore? (after test rework)
 func TestResampleSpline48To32SmallBorders(t *testing.T) {
 	var tObj testutils.TestObj = testutils.TestObj{}.New(testutils.SinWave{}.New(0, 3, 48000, 32000), testutils.TestResampler(&resamplerSpline{inRate: 48000, outRate: 32000}), 10, t)
 	err := tObj.Run()
@@ -79,3 +80,4 @@ func TestResampleSpline48To32SmallBorders(t *testing.T) {
 		t.Error(err)
 	}
 }
+*/

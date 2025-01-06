@@ -54,6 +54,9 @@ type TestResult struct {
 	InWave     []int16
 	CorrectW   []int16
 	SDur       time.Duration `json:"MSDurMS"` // mean summary duration
+    NumChannels int  // to be able to parse logs later
+    InRate     int
+    OutRate    int
 }
 
 type TestObj struct {
@@ -185,6 +188,9 @@ func (tObj *TestObj) Run() error {
 	tObj.Tres.Resampeled = outWave
 	tObj.Tres.InWave = inWave
 	tObj.Tres.SDur = time.Duration((sE.Sub(sT) / time.Duration(tObj.RunAmt)).Milliseconds()) // divide, no?
+    tObj.Tres.InRate = tObj.Tw.InRate()
+    tObj.Tres.OutRate = tObj.Tr.OutRate()
+    tObj.Tres.NumChannels = tObj.Tw.NumChannels()
 
     if !tObj.Tw.WithResampled() {
         return nil

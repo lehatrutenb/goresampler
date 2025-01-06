@@ -1,5 +1,7 @@
 package utils
 
+import "golang.org/x/exp/constraints"
+
 func ResampleWithChannelAmt(resampler func([]int16) []int16, inp []int16, numCh int) []int16 {
     switch numCh {
     case 1:
@@ -66,4 +68,17 @@ func ResampleWithChannelAmtTest(rsm mtResampable, inp []int16, numCh int) error 
         return nil 
     }
     return nil
+}
+
+type Numeric interface {
+    constraints.Integer | constraints.Float
+}
+
+// TODO check in compiled code is it really generates funcs or rewrite to int16
+func GetWithStep[T Numeric](arr []T, start, step int) []T {
+    res := make([]T, len(arr)/step)
+    for i := 0; i < len(res); i++ {
+        res[i] = arr[start + i * step]
+    }
+    return res
 }
