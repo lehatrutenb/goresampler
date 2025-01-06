@@ -10,6 +10,9 @@ gitCommit:
 		mv plots/$$last_plot_dir_name plots/$$last_commit_hash
 	-mkdir plots/latest
 
+runPlotting:
+	python3 ./resampler/internal/test_utils/plots.py --plot-path="./plots/latest/" # it's written here cause running from go code looks dirty
+
 runTest:
 	go test -count=1 -v ./resampler/internal/resample/
-	python3 ./resampler/internal/test_utils/plots.py --plot-path="./plots/latest/" # it's written here cause running from go code looks dirty
+	make runPlotting

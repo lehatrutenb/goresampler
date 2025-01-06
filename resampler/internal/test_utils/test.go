@@ -34,7 +34,7 @@ type MTTestResampler struct {
     trs []TestResampler
 }
 
-type TestErr struct { // площадь процентного различия больтше 10 5
+type TestErr struct { // площадь процентного различия больше 10 5
 	SqProc20    float64 `json:"Proc of xs with error higher 20%"`
 	SqProc10    float64 `json:"Proc of xs with error higher 10%"`
 	SqProc5     float64 `json:"Proc of xs with error higher 5%"`
@@ -206,52 +206,3 @@ func (tObj *TestObj) Run() error {
 
     return nil
 }
-
-
-/* is really need additional func?
-func (tObj *TestObj) RunTrunc() error {
-	var err error
-	tObj.Tw.New(1)
-
-	inWave := make([]int16, tObj.Tw.InLen())
-	for i := 0; i < len(inWave); i++ {
-		inWave[i], err = tObj.Tw.GetIn(i)
-		if err != nil {
-			tObj.t.Error("failed to get input wave")
-			return err
-		}
-	}
-
-	sT := time.Now() // TODO check if there are another better opts to measure
-
-	for runInd := 0; runInd < tObj.RunAmt; runInd++ { // run as much as said
-		err = tObj.Tr.Resample(inWave)
-		if err != nil {
-			tObj.t.Error("failed to resample")
-			return err
-		}
-
-		// if sm realization is lazy/...
-		for i := 0; i < tObj.Tr.OutLen(); i++ {
-			_, _ = tObj.Tr.Get(i)
-		}
-	}
-
-	sE := time.Now()
-
-	outWave := make([]int16, tObj.Tr.OutLen())
-	for i := 0; i < tObj.Tr.OutLen(); i++ { // cmp results
-		got, err1 := tObj.Tr.Get(i)
-		if err1 != nil {
-			tObj.t.Error("failed to get output wave")
-			return err1
-		}
-		outWave[i] = got
-	}
-
-	tObj.Tres.Resampeled = outWave
-	tObj.Tres.InWave = inWave
-	tObj.Tres.SDur = time.Duration((sE.Sub(sT) / time.Duration(tObj.RunAmt)).Milliseconds()) // divide, no?
-
-	return nil
-}*/

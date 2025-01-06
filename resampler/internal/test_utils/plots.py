@@ -51,9 +51,9 @@ def draw_2waves_same_sample_rate_multichannel(plots, wave1, wave2, ch_amt, opts:
             draw_1wave_same_sample_rate(plots[1], xs, err, err_opts, 0)
             draw_1wave_same_sample_rate(plots[1], xs_large, err_large, err_opts.set_plt_settings([{"c":"purple", "s":100, "label":"abs error > 10000"}]), 0) # too large errors
 
-def lcm(a: int, b: int)->int:
+def gcd(a: int, b: int)->int:
     if a < b:
-        swap(a, b)
+        a, b = b, a
     while b > 0:
         a %= b
         a, b = b, a
@@ -61,19 +61,26 @@ def lcm(a: int, b: int)->int:
 
 # theoretically its possible to use frac x, but int sol is fine too
 def draw_1wave_different_sample_rate(plot, wave1, sr1, sr2, opts: Plot_options, opts_ind: int):
-    r_lcm = (sr1 * sr2) // lcm(sr1, sr2)
-    mult1, mult2 = r_lcm//sr1, r_lcm//sr2
+    # r_lcm = (sr1 * sr2) // gcd(sr1, sr2) # not to calc float time - but no point in it
+    # mult1, mult2 = r_lcm//sr1, r_lcm//sr2
     st1, st2 = 1/sr1, 1/sr2
-    plot.scatter([i*st1 for i in range(len(wave1))], wave1, **(opts.plt_settings[opts_ind]))
+    xs = [i*st1 for i in range(len(wave1))]
+
+    plot.scatter(xs, wave1, **(opts.plt_settings[opts_ind]))
     plot.grid(True)
     plot.set_title(opts.title)
     plot.legend()
 
 def draw_1wave_different_sample_rate_multichannel(plot, wave1, ch_amt, sr1, sr2, opts: Plot_options):
+    MAX_LEN = MAX_WAVE_LEN # to make waves simular in time
+    if sr1 < sr2:
+        MAX_LEN = int(float(MAX_LEN) * float(sr1) / float(sr2))
+
     for i in range(ch_amt):
-        draw_1wave_different_sample_rate(plot, wave1[i::ch_amt][:min(len(wave1), MAX_WAVE_LEN)], sr1, sr2, opts, i)
+        draw_1wave_different_sample_rate(plot, wave1[i::ch_amt][:min(len(wave1), MAX_LEN)], sr1, sr2, opts, i)
 
 def plot_test_res(fname):
+    print("\nWorking on", fname, "\n")
     with open(fname) as f:
         data = json.load(f)
         ch_amt = data["NumChannels"]
@@ -92,7 +99,7 @@ def plot_test_res(fname):
         fig, ax = plt.subplots(2, 2, figsize=(60, 25))
         opts = Plot_options(plt_settings=[{"c":"red", "s":1, "label": "0 channel"}, {"c":"blue", "s":1, "label": "1 channel"}])
         draw_1wave_different_sample_rate_multichannel(ax[0, 1], input_w, ch_amt, in_rate, out_rate, opts.set_title("input wave"))
-        draw_1wave_different_sample_rate_multichannel(ax[1, 1], resampled_w, ch_amt, in_rate, out_rate, opts.set_title("resampled wave"))
+        draw_1wave_different_sample_rate_multichannel(ax[1, 1], resampled_w, ch_amt, out_rate, in_rate, opts.set_title("resampled wave"))
         if corr_w != None:
               opts = Plot_options(title="correct wave", plt_settings=[{"c":"red", "s":1, "label":"correct wave"}, {"c":"blue", "s":1, "label": "resampled wave"}], with_error=(True if ch_amt==1 else False))
               draw_2waves_same_sample_rate_multichannel([ax[0, 0], ax[1, 0]], corr_w, resampled_w, ch_amt, opts)
