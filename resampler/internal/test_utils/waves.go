@@ -82,11 +82,11 @@ type RealWave struct {
 var PATH_TO_BASE_WAVES = "../../../base_waves/"
 
 // don't want to return err there not to caught it in test code
-func (RealWave) New(fInd int) TestWave {
-    var realWaveFiles map[int]string = map[int]string{0:"base1.wav",1:"base2.wav",2:"base3.wav"}
+func (RealWave) New(fInd int, rate int) TestWave {
+    var realWaveFiles map[int]string = map[int]string{0:"base1",1:"base2",2:"base3"}
 
     fName := realWaveFiles[fInd]
-    f, err := os.Open(PATH_TO_BASE_WAVES + fName)
+    f, err := os.Open(fmt.Sprintf("%s%s/%s_%d.wav", PATH_TO_BASE_WAVES, fName, fName, rate))
     defer f.Close()
     if err != nil {
         panic(err)

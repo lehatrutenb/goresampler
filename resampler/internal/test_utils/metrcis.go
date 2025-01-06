@@ -16,6 +16,7 @@ import (
 )
 
 const SAVE_PATH = "../../../plots"
+const DRAW_USING_GO = false
 
 func createPointsFromData(wave []int16) plotter.XYs {
 	pts := make(plotter.XYs, len(wave))
@@ -28,33 +29,39 @@ func createPointsFromData(wave []int16) plotter.XYs {
 func (tObj TestObj) drawPlots(baseFName string) error {
 	// TODO save more data
 
-	p := plot.New()
+    maxDataLength := min(100000, len(tObj.Tres.Resampeled)-1) // to make it fast
 
-	p.Title.Text = baseFName
-	p.X.Label.Text = "X"
-	p.Y.Label.Text = "PCM"
+    for i := 0; i < tObj.Tw.NumChannels(); i++ {
+        p := plot.New()
 
-	sCorr, err := plotter.NewScatter(createPointsFromData(tObj.Tres.CorrectW))
-	if err != nil {
-		tObj.t.Error("failed to create scatter")
-		return err
-	}
-	sCorr.GlyphStyle.Radius = vg.Points(1)
-	sCorr.GlyphStyle.Color = color.RGBA{R: 255}
+        p.Title.Text = baseFName + string(i) + "Channel"
+        p.X.Label.Text = "X"
+        p.Y.Label.Text = "PCM"
+        if tObj.Tw.WithResampled() {
+            sCorr, err := plotter.NewScatter(createPointsFromData(utils.GetWithStep(tObj.Tres.CorrectW, i, tObj.Tw.NumChannels()))[:maxDataLength])
+	        if err != nil {
+		        tObj.t.Error("failed to create scatter")
+		        return err
+	        }
+	        sCorr.GlyphStyle.Radius = vg.Points(1)
+	        sCorr.GlyphStyle.Color = color.RGBA{R: 255}
+            p.Add(sCorr)
+        }
 
-	sRes, err := plotter.NewScatter(createPointsFromData(tObj.Tres.Resampeled))
-	if err != nil {
-		tObj.t.Error("failed to create scatter")
-		return err
-	}
-	sRes.GlyphStyle.Radius = vg.Points(1)
-	sRes.GlyphStyle.Color = color.RGBA{B: 255}
-	p.Add(sCorr, sRes)
+        sRes, err := plotter.NewScatter(createPointsFromData(utils.GetWithStep(tObj.Tres.Resampeled, i, tObj.Tw.NumChannels()))[:maxDataLength])
+        if err != nil {
+            tObj.t.Error("failed to create scatter")
+            return err
+        }
+        sRes.GlyphStyle.Radius = vg.Points(1)
+        sRes.GlyphStyle.Color = color.RGBA{B: 255}
+        p.Add(sRes)
 
-	if err := p.Save(30*vg.Inch, 12*vg.Inch, fmt.Sprintf("%s:plot.png", baseFName)); err != nil {
-		tObj.t.Error("failed to save plots")
-		return err
-	}
+        if err := p.Save(30*vg.Inch, 12*vg.Inch, fmt.Sprintf("%s:plot%dch.png", baseFName, i)); err != nil {
+            tObj.t.Error("failed to save plots")
+            return err
+        }
+    }
 	return nil
 }
 
@@ -99,8 +106,7 @@ func (tObj TestObj) saveSoundFile(baseFName string) error {
 	buf1 := audio.IntBuffer{Format: &audio.Format{NumChannels: tObj.Tw.NumChannels(), SampleRate: tObj.Tw.InRate()}, Data: utils.AS16ToInt(tObj.Tres.InWave), SourceBitDepth: 16}
 	buf2 := audio.IntBuffer{Format: &audio.Format{NumChannels: tObj.Tw.NumChannels(), SampleRate: tObj.Tr.OutRate()}, Data: utils.AS16ToInt(tObj.Tres.Resampeled), SourceBitDepth: 16}
 
-    tObj.t.Error(buf1.NumFrames(), len(utils.AS16ToInt(tObj.Tres.InWave)), len(tObj.Tres.InWave))
-	if err := createSoundFile(baseFName+"_inWave.wav", &buf1); err != nil {
+   	if err := createSoundFile(baseFName+"_inWave.wav", &buf1); err != nil {
 		return err
 	}
 
@@ -139,20 +145,19 @@ func (tObj TestObj) Save(dirName string) error {
 		return err
 	}
 
-	err = os.WriteFile(fmt.Sprintf("%s:large", baseFName), bufL, 0666)
+    err = os.WriteFile(fmt.Sprintf("%s:large", baseFName), bufL, 0666) // Care: large is keyword
 	if err != nil {
 		tObj.t.Error("failed to save metrics file")
 		return err
 	}
 
-    if tObj.Tw.WithResampled() {
-        if err := tObj.fastDrawPlots(baseFName); err != nil {
-            tObj.t.Error("failed to plot")
+    if DRAW_USING_GO {
+        if err := tObj.drawPlots(baseFName); err != nil {
+            tObj.t.Error("failed to plot using go")
             return err
         }
-        return nil // dont really think we need sound file of some math func
     }
-	if err := tObj.saveSoundFile(baseFName); err != nil {
+    if err := tObj.saveSoundFile(baseFName); err != nil {
 		tObj.t.Error("failed to save wav files")
 		return err
 	}

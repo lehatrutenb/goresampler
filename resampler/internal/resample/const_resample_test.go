@@ -86,7 +86,7 @@ func TestResample48To32(t *testing.T) {
 }
 
 func TestResample48To32RealWave(t *testing.T) {
-	var tObj testutils.TestObj = testutils.TestObj{}.New(testutils.RealWave{}.New(0), testutils.TestResampler(&resampler48To32{}), 10, t)
+	var tObj testutils.TestObj = testutils.TestObj{}.New(testutils.RealWave{}.New(0, 48000), testutils.TestResampler(&resampler48To32{}), 10, t)
 	err := tObj.Run()
 	if !assert.NoError(t, err, "failed to run resampler") {
 		t.Error(err)
