@@ -2,9 +2,9 @@ package testutils
 
 import (
 	"math"
+	"resampler/internal/utils"
 	"testing"
 	"time"
-    "resampler/internal/utils"
 )
 
 type TestWave interface {
@@ -16,22 +16,22 @@ type TestWave interface {
 	String() string
 	InRate() int
 	OutRate() int
-    WithResampled() bool
-    NumChannels() int
+	WithResampled() bool
+	NumChannels() int
 }
 
 // don't mind with interfaces in tests - don't believe that affect will change cmps
 type TestResampler interface {
-    Copy() TestResampler
+	Copy() TestResampler
 	Resample(inWave []int16) error
 	Get(index int) (int16, error)
-    OutLen() int
-    OutRate() int
+	OutLen() int
+	OutRate() int
 	String() string
 }
 
 type MTTestResampler struct {
-    trs []TestResampler
+	trs []TestResampler
 }
 
 type TestErr struct { // площадь процентного различия больше 10 5
@@ -49,14 +49,14 @@ type TestResultZipped struct {
 }
 
 type TestResult struct {
-	Te         TestErr
-	Resampeled []int16
-	InWave     []int16
-	CorrectW   []int16
-	SDur       time.Duration `json:"MSDurMS"` // mean summary duration
-    NumChannels int  // to be able to parse logs later
-    InRate     int
-    OutRate    int
+	Te          TestErr
+	Resampeled  []int16
+	InWave      []int16
+	CorrectW    []int16
+	SDur        time.Duration `json:"MSDurMS"` // mean summary duration
+	NumChannels int           // to be able to parse logs later
+	InRate      int
+	OutRate     int
 }
 
 type TestObj struct {
@@ -71,41 +71,41 @@ func (MTTestResampler) Seed(int) {
 }
 
 func (MTTestResampler) New(tr TestResampler, chAmt int) MTTestResampler {
-    trs := make([]TestResampler, chAmt)
-    for i := 0; i < len(trs); i++ {
-        trs[i] = tr.Copy()
-    }
-    return MTTestResampler {trs}
+	trs := make([]TestResampler, chAmt)
+	for i := 0; i < len(trs); i++ {
+		trs[i] = tr.Copy()
+	}
+	return MTTestResampler{trs}
 }
 
 func (tr MTTestResampler) Copy() TestResampler {
-    res := new(MTTestResampler)
-    *res = tr.New(tr.trs[0], len(tr.trs))
-    return res
+	res := new(MTTestResampler)
+	*res = tr.New(tr.trs[0], len(tr.trs))
+	return res
 }
 
 func (tr MTTestResampler) GetIthResampler(i int) utils.Resampable {
-    return tr.trs[i]
+	return tr.trs[i]
 }
 
 func (tr *MTTestResampler) Resample(in []int16) error {
-    return utils.ResampleWithChannelAmtTest(tr, in, len(tr.trs))
+	return utils.ResampleWithChannelAmtTest(tr, in, len(tr.trs))
 }
 
 func (tr MTTestResampler) Get(ind int) (int16, error) {
-    return tr.trs[ind % len(tr.trs)].Get(ind/len(tr.trs))
+	return tr.trs[ind%len(tr.trs)].Get(ind / len(tr.trs))
 }
 
 func (tr MTTestResampler) OutLen() int {
-    return tr.trs[0].OutLen() * len(tr.trs)
+	return tr.trs[0].OutLen() * len(tr.trs)
 }
 
 func (tr MTTestResampler) OutRate() int {
-    return tr.trs[0].OutRate()
+	return tr.trs[0].OutRate()
 }
 
 func (tr MTTestResampler) String() string {
-    return tr.trs[0].String()
+	return tr.trs[0].String()
 }
 
 func (TestObj) New(tw TestWave, tr TestResampler, runAmt int, t *testing.T) TestObj {
@@ -172,29 +172,29 @@ func (tObj *TestObj) Run() error {
 			return err1
 		}
 		outWave[i] = got
-		
-        if tObj.Tw.WithResampled() {
-            corr, err2 := tObj.Tw.GetOut(i)
-		    if err2 != nil {
-			    tObj.t.Error("failed to get correct output wave")
-			    return err2
-		    }
 
-		    tObj.Tres.Te.recalcErr(got, corr)
-		    CorrectW[i] = corr
-        }
+		if tObj.Tw.WithResampled() {
+			corr, err2 := tObj.Tw.GetOut(i)
+			if err2 != nil {
+				tObj.t.Error("failed to get correct output wave")
+				return err2
+			}
+
+			tObj.Tres.Te.recalcErr(got, corr)
+			CorrectW[i] = corr
+		}
 	}
 
 	tObj.Tres.Resampeled = outWave
 	tObj.Tres.InWave = inWave
 	tObj.Tres.SDur = time.Duration((sE.Sub(sT) / time.Duration(tObj.RunAmt)).Milliseconds()) // divide, no?
-    tObj.Tres.InRate = tObj.Tw.InRate()
-    tObj.Tres.OutRate = tObj.Tr.OutRate()
-    tObj.Tres.NumChannels = tObj.Tw.NumChannels()
+	tObj.Tres.InRate = tObj.Tw.InRate()
+	tObj.Tres.OutRate = tObj.Tr.OutRate()
+	tObj.Tres.NumChannels = tObj.Tw.NumChannels()
 
-    if !tObj.Tw.WithResampled() {
-        return nil
-    }
+	if !tObj.Tw.WithResampled() {
+		return nil
+	}
 
 	tObj.Tres.Te.ErrMeanSqed = tObj.Tres.Te.ErrSqed / float64(tObj.Tw.OutLen())
 	tObj.Tres.Te.SqProc1 /= float64(tObj.Tw.OutLen())
@@ -204,5 +204,5 @@ func (tObj *TestObj) Run() error {
 
 	tObj.Tres.CorrectW = CorrectW
 
-    return nil
+	return nil
 }

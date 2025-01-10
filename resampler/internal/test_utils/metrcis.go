@@ -29,39 +29,39 @@ func createPointsFromData(wave []int16) plotter.XYs {
 func (tObj TestObj) drawPlots(baseFName string) error {
 	// TODO save more data
 
-    maxDataLength := min(100000, len(tObj.Tres.Resampeled)-1) // to make it fast
+	maxDataLength := min(100000, len(tObj.Tres.Resampeled)-1) // to make it fast
 
-    for i := 0; i < tObj.Tw.NumChannels(); i++ {
-        p := plot.New()
+	for i := 0; i < tObj.Tw.NumChannels(); i++ {
+		p := plot.New()
 
-        p.Title.Text = baseFName + string(i) + "Channel"
-        p.X.Label.Text = "X"
-        p.Y.Label.Text = "PCM"
-        if tObj.Tw.WithResampled() {
-            sCorr, err := plotter.NewScatter(createPointsFromData(utils.GetWithStep(tObj.Tres.CorrectW, i, tObj.Tw.NumChannels()))[:maxDataLength])
-	        if err != nil {
-		        tObj.t.Error("failed to create scatter")
-		        return err
-	        }
-	        sCorr.GlyphStyle.Radius = vg.Points(1)
-	        sCorr.GlyphStyle.Color = color.RGBA{R: 255}
-            p.Add(sCorr)
-        }
+		p.Title.Text = baseFName + string(i) + "Channel"
+		p.X.Label.Text = "X"
+		p.Y.Label.Text = "PCM"
+		if tObj.Tw.WithResampled() {
+			sCorr, err := plotter.NewScatter(createPointsFromData(utils.GetWithStep(tObj.Tres.CorrectW, i, tObj.Tw.NumChannels()))[:maxDataLength])
+			if err != nil {
+				tObj.t.Error("failed to create scatter")
+				return err
+			}
+			sCorr.GlyphStyle.Radius = vg.Points(1)
+			sCorr.GlyphStyle.Color = color.RGBA{R: 255}
+			p.Add(sCorr)
+		}
 
-        sRes, err := plotter.NewScatter(createPointsFromData(utils.GetWithStep(tObj.Tres.Resampeled, i, tObj.Tw.NumChannels()))[:maxDataLength])
-        if err != nil {
-            tObj.t.Error("failed to create scatter")
-            return err
-        }
-        sRes.GlyphStyle.Radius = vg.Points(1)
-        sRes.GlyphStyle.Color = color.RGBA{B: 255}
-        p.Add(sRes)
+		sRes, err := plotter.NewScatter(createPointsFromData(utils.GetWithStep(tObj.Tres.Resampeled, i, tObj.Tw.NumChannels()))[:maxDataLength])
+		if err != nil {
+			tObj.t.Error("failed to create scatter")
+			return err
+		}
+		sRes.GlyphStyle.Radius = vg.Points(1)
+		sRes.GlyphStyle.Color = color.RGBA{B: 255}
+		p.Add(sRes)
 
-        if err := p.Save(30*vg.Inch, 12*vg.Inch, fmt.Sprintf("%s:plot%dch.png", baseFName, i)); err != nil {
-            tObj.t.Error("failed to save plots")
-            return err
-        }
-    }
+		if err := p.Save(30*vg.Inch, 12*vg.Inch, fmt.Sprintf("%s:plot%dch.png", baseFName, i)); err != nil {
+			tObj.t.Error("failed to save plots")
+			return err
+		}
+	}
 	return nil
 }
 
@@ -106,7 +106,7 @@ func (tObj TestObj) saveSoundFile(baseFName string) error {
 	buf1 := audio.IntBuffer{Format: &audio.Format{NumChannels: tObj.Tw.NumChannels(), SampleRate: tObj.Tw.InRate()}, Data: utils.AS16ToInt(tObj.Tres.InWave), SourceBitDepth: 16}
 	buf2 := audio.IntBuffer{Format: &audio.Format{NumChannels: tObj.Tw.NumChannels(), SampleRate: tObj.Tr.OutRate()}, Data: utils.AS16ToInt(tObj.Tres.Resampeled), SourceBitDepth: 16}
 
-   	if err := createSoundFile(baseFName+"_inWave.wav", &buf1); err != nil {
+	if err := createSoundFile(baseFName+"_inWave.wav", &buf1); err != nil {
 		return err
 	}
 
@@ -114,12 +114,12 @@ func (tObj TestObj) saveSoundFile(baseFName string) error {
 		return err
 	}
 
-    if tObj.Tw.WithResampled() {
-        buf3 := audio.IntBuffer{Format: &audio.Format{NumChannels: tObj.Tw.NumChannels(), SampleRate: tObj.Tw.OutRate()}, Data: utils.AS16ToInt(tObj.Tres.CorrectW), SourceBitDepth: 16}
-	    if err := createSoundFile(baseFName+"_CorrectOutWave.wav", &buf3); err != nil {
-		    return err
-	    }
-    }
+	if tObj.Tw.WithResampled() {
+		buf3 := audio.IntBuffer{Format: &audio.Format{NumChannels: tObj.Tw.NumChannels(), SampleRate: tObj.Tw.OutRate()}, Data: utils.AS16ToInt(tObj.Tres.CorrectW), SourceBitDepth: 16}
+		if err := createSoundFile(baseFName+"_CorrectOutWave.wav", &buf3); err != nil {
+			return err
+		}
+	}
 
 	return nil
 }
@@ -145,19 +145,19 @@ func (tObj TestObj) Save(dirName string) error {
 		return err
 	}
 
-    err = os.WriteFile(fmt.Sprintf("%s:large", baseFName), bufL, 0666) // Care: large is keyword
+	err = os.WriteFile(fmt.Sprintf("%s:large", baseFName), bufL, 0666) // Care: large is keyword
 	if err != nil {
 		tObj.t.Error("failed to save metrics file")
 		return err
 	}
 
-    if DRAW_USING_GO {
-        if err := tObj.drawPlots(baseFName); err != nil {
-            tObj.t.Error("failed to plot using go")
-            return err
-        }
-    }
-    if err := tObj.saveSoundFile(baseFName); err != nil {
+	if DRAW_USING_GO {
+		if err := tObj.drawPlots(baseFName); err != nil {
+			tObj.t.Error("failed to plot using go")
+			return err
+		}
+	}
+	if err := tObj.saveSoundFile(baseFName); err != nil {
 		tObj.t.Error("failed to save wav files")
 		return err
 	}

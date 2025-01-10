@@ -30,7 +30,7 @@ func (rsm resampler48To32) OutLen() int {
 }
 
 func (resampler48To32) OutRate() int {
-    return 32000
+	return 32000
 }
 
 func (rsm resampler48To32) Get(ind int) (int16, error) {
@@ -62,7 +62,7 @@ func (rsm resampler48To32L) OutLen() int {
 }
 
 func (resampler48To32L) OutRate() int {
-    return 32000
+	return 32000
 }
 
 func (rsm resampler48To32L) Get(ind int) (int16, error) {
@@ -97,7 +97,6 @@ func TestResample48To32RealWave(t *testing.T) {
 		t.Error(err)
 	}
 }
-
 
 func TestResample48To32L(t *testing.T) {
 	var tObj testutils.TestObj = testutils.TestObj{}.New(testutils.SinWave{}.New(0, 50, 48000, 32000), testutils.TestResampler(&resampler48To32L{}), 10, t)
