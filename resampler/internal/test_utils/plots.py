@@ -75,7 +75,7 @@ def draw_1wave_different_sample_rate_multichannel(plot, wave1, ch_amt, sr1, sr2,
     MAX_LEN = MAX_WAVE_LEN # to make waves simular in time
     if sr1 < sr2:
         MAX_LEN = int(float(MAX_LEN) * float(sr1) / float(sr2))
-
+    
     for i in range(ch_amt):
         draw_1wave_different_sample_rate(plot, wave1[i::ch_amt][:min(len(wave1), MAX_LEN)], sr1, sr2, opts, i)
 

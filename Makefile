@@ -9,6 +9,7 @@ gitCommit:
 		export last_commit_hash=$(shell git log --format="%H" -n 1) ; \
 		mv plots/$$last_plot_dir_name plots/$$last_commit_hash
 	-mkdir plots/latest
+	-mkdir plots/latest/legacy
 
 runPlotting:
 	python3 ./resampler/internal/test_utils/plots.py --plot-path="./plots/latest/" # it's written here cause running from go code looks dirty
@@ -16,3 +17,7 @@ runPlotting:
 runTest:
 	go test -count=1 -v ./resampler/internal/resample/
 	make runPlotting
+
+runGenerate:
+	-rm resampler/internal/resample/legacy_resampler/legacy_resample_test.go
+	go run ./resampler/internal/test_utils/legacy_gen/gen_legacy_tests.go

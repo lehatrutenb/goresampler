@@ -17,13 +17,13 @@ type resamplerSpline struct {
 }
 
 func (resamplerSpline) New(inRate int, outRate int) resamplerSpline {
-    return resamplerSpline{inRate, outRate, []int16{}}
+	return resamplerSpline{inRate, outRate, []int16{}}
 }
 
 func (rsm resamplerSpline) Copy() testutils.TestResampler {
-    res := new(resamplerSpline)
-    *res = rsm.New(rsm.inRate, rsm.outRate)
-    return res
+	res := new(resamplerSpline)
+	*res = rsm.New(rsm.inRate, rsm.outRate)
+	return res
 }
 
 func (rsm resamplerSpline) String() string {
@@ -43,9 +43,8 @@ func (rsm resamplerSpline) OutLen() int {
 }
 
 func (rsm resamplerSpline) OutRate() int {
-    return rsm.outRate
+	return rsm.outRate
 }
-
 
 func (rsm resamplerSpline) Get(ind int) (int16, error) {
 	if ind >= len(rsm.resampled) {
