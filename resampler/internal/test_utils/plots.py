@@ -1,4 +1,5 @@
 import matplotlib.pyplot as plt
+from multiprocessing import Pool
 import json
 import os
 import argparse
@@ -39,17 +40,24 @@ def draw_2waves_same_sample_rate_multichannel(plots, wave1, wave2, ch_amt, opts:
             err = []
             xs = []
             err_large, xs_large = [], []
+            err20, xs_err20 = [], []
             for i in range(min(len(wave1_cut), len(wave2_cut))):
                 diff = wave1_cut[i]-wave2_cut[i]
-                if abs(diff)>10000: # if difference is too large than it should be easy to find by eyes on other plots but not sure
-                    err_large.append(0)
-                    xs_large.append(i)
-                    continue
+                if abs(diff)>wave1_cut[i]*0.2: # if difference is too large than it should be easy to find by eyes on other plots but not sure
+                    err20.append(diff)
+                    xs_err20.append(i)
+
+                    if abs(diff)>10000: # if difference is too large than it should be easy to find by eyes on other plots but not sure
+                        err_large.append(0)
+                        xs_large.append(i)
+                        continue
+
                 err.append(diff)
                 xs.append(i)
             err_opts = opts.set_title(opts.title + " signed error").set_plt_settings([{"c":"red", "s":1, "label":"signed error"}])
             draw_1wave_same_sample_rate(plots[1], xs, err, err_opts, 0)
             draw_1wave_same_sample_rate(plots[1], xs_large, err_large, err_opts.set_plt_settings([{"c":"purple", "s":100, "label":"abs error > 10000"}]), 0) # too large errors
+            draw_1wave_same_sample_rate(plots[1], xs_err20, err20, err_opts.set_plt_settings([{"c":"teal", "s":5, "label":"abs error > 20%"}]), 0)
 
 def gcd(a: int, b: int)->int:
     if a < b:
@@ -104,11 +112,26 @@ def plot_test_res(fname):
               opts = Plot_options(title="correct wave", plt_settings=[{"c":"red", "s":1, "label":"correct wave"}, {"c":"blue", "s":1, "label": "resampled wave"}], with_error=(True if ch_amt==1 else False))
               draw_2waves_same_sample_rate_multichannel([ax[0, 0], ax[1, 0]], corr_w, resampled_w, ch_amt, opts)
         fig.savefig(fname + '.png', dpi=200)
+        plt.close(fig)
 
 
 parser = argparse.ArgumentParser(prog="plots.py", description="plots all saved data from plots/latest")
-parser.add_argument("-p", "--plot-path")
-plot_path = parser.parse_args().plot_path
+parser.add_argument("-j", "--workers-amt")
+parser.add_argument("-p1", "--plot-path1")
+parser.add_argument("-p2", "--plot-path2")
+plot_path = parser.parse_args().plot_path1
+
+args = []
+
 for file in os.scandir(plot_path):
     if file.name.endswith(":large"):
-        plot_test_res(plot_path + file.name)
+        args += [plot_path + file.name]
+
+plot_path = parser.parse_args().plot_path2
+for file in os.scandir(plot_path):
+    if file.name.endswith(":large"):
+        args += [plot_path + file.name]
+
+p = Pool(int(parser.parse_args().workers_amt))
+with p:
+    p.map(plot_test_res, args)

@@ -21,8 +21,7 @@ func (resampler8To16L) String() string {
 	return "8000_to_16000_resamplerL"
 }
 func (rsm *resampler8To16L) Resample(inp []int16) error {
-	resamplerl.Resample8To16L(inp, rsm.resampled)
-	return nil
+	return resamplerl.Resample8To16L(inp, &rsm.resampled)
 }
 func (rsm resampler8To16L) OutLen() int {
 	return len(rsm.resampled)
@@ -37,7 +36,12 @@ func (rsm resampler8To16L) Get(ind int) (int16, error) {
 	return rsm.resampled[ind], nil
 }
 func TestResample8To16L(t *testing.T) {
-	var tObj testutils.TestObj = testutils.TestObj{}.New(testutils.SinWave{}.New(0, 50, 8000, 16000), testutils.TestResampler(&resampler8To16L{}), 10, t)
+	defer func() {
+		if r := recover(); r != nil {
+			t.Error(r)
+		}
+	}()
+	var tObj testutils.TestObj = testutils.TestObj{}.New(testutils.SinWave{}.New(0, 55, 8000, 16000), testutils.TestResampler(&resampler8To16L{}), 10, t, &testutils.TestOpts{false, "../../../../plots"})
 	err := tObj.Run()
 	if !assert.NoError(t, err, "failed to run resampler") {
 		t.Error(err)
@@ -59,8 +63,7 @@ func (resampler11To8L) String() string {
 	return "11000_to_8000_resamplerL"
 }
 func (rsm *resampler11To8L) Resample(inp []int16) error {
-	resamplerl.Resample11To8L(inp, rsm.resampled)
-	return nil
+	return resamplerl.Resample11To8L(inp, &rsm.resampled)
 }
 func (rsm resampler11To8L) OutLen() int {
 	return len(rsm.resampled)
@@ -75,7 +78,12 @@ func (rsm resampler11To8L) Get(ind int) (int16, error) {
 	return rsm.resampled[ind], nil
 }
 func TestResample11To8L(t *testing.T) {
-	var tObj testutils.TestObj = testutils.TestObj{}.New(testutils.SinWave{}.New(0, 50, 11000, 8000), testutils.TestResampler(&resampler11To8L{}), 10, t)
+	defer func() {
+		if r := recover(); r != nil {
+			t.Error(r)
+		}
+	}()
+	var tObj testutils.TestObj = testutils.TestObj{}.New(testutils.SinWave{}.New(0, 55, 11000, 8000), testutils.TestResampler(&resampler11To8L{}), 10, t, &testutils.TestOpts{false, "../../../../plots"})
 	err := tObj.Run()
 	if !assert.NoError(t, err, "failed to run resampler") {
 		t.Error(err)
@@ -97,8 +105,7 @@ func (resampler11To16L) String() string {
 	return "11000_to_16000_resamplerL"
 }
 func (rsm *resampler11To16L) Resample(inp []int16) error {
-	resamplerl.Resample11To16L(inp, rsm.resampled)
-	return nil
+	return resamplerl.Resample11To16L(inp, &rsm.resampled)
 }
 func (rsm resampler11To16L) OutLen() int {
 	return len(rsm.resampled)
@@ -113,7 +120,12 @@ func (rsm resampler11To16L) Get(ind int) (int16, error) {
 	return rsm.resampled[ind], nil
 }
 func TestResample11To16L(t *testing.T) {
-	var tObj testutils.TestObj = testutils.TestObj{}.New(testutils.SinWave{}.New(0, 50, 11000, 16000), testutils.TestResampler(&resampler11To16L{}), 10, t)
+	defer func() {
+		if r := recover(); r != nil {
+			t.Error(r)
+		}
+	}()
+	var tObj testutils.TestObj = testutils.TestObj{}.New(testutils.SinWave{}.New(0, 55, 11000, 16000), testutils.TestResampler(&resampler11To16L{}), 10, t, &testutils.TestOpts{false, "../../../../plots"})
 	err := tObj.Run()
 	if !assert.NoError(t, err, "failed to run resampler") {
 		t.Error(err)
@@ -135,8 +147,7 @@ func (resampler16To8L) String() string {
 	return "16000_to_8000_resamplerL"
 }
 func (rsm *resampler16To8L) Resample(inp []int16) error {
-	resamplerl.Resample16To8L(inp, rsm.resampled)
-	return nil
+	return resamplerl.Resample16To8L(inp, &rsm.resampled)
 }
 func (rsm resampler16To8L) OutLen() int {
 	return len(rsm.resampled)
@@ -151,7 +162,12 @@ func (rsm resampler16To8L) Get(ind int) (int16, error) {
 	return rsm.resampled[ind], nil
 }
 func TestResample16To8L(t *testing.T) {
-	var tObj testutils.TestObj = testutils.TestObj{}.New(testutils.SinWave{}.New(0, 50, 16000, 8000), testutils.TestResampler(&resampler16To8L{}), 10, t)
+	defer func() {
+		if r := recover(); r != nil {
+			t.Error(r)
+		}
+	}()
+	var tObj testutils.TestObj = testutils.TestObj{}.New(testutils.SinWave{}.New(0, 55, 16000, 8000), testutils.TestResampler(&resampler16To8L{}), 10, t, &testutils.TestOpts{false, "../../../../plots"})
 	err := tObj.Run()
 	if !assert.NoError(t, err, "failed to run resampler") {
 		t.Error(err)
@@ -170,11 +186,10 @@ func (resampler44To8L) Copy() testutils.TestResampler {
 	return new(resampler44To8L)
 }
 func (resampler44To8L) String() string {
-	return "44100_to_8000_resamplerL"
+	return "44000_to_8000_resamplerL"
 }
 func (rsm *resampler44To8L) Resample(inp []int16) error {
-	resamplerl.Resample44To8L(inp, rsm.resampled)
-	return nil
+	return resamplerl.Resample44To8L(inp, &rsm.resampled)
 }
 func (rsm resampler44To8L) OutLen() int {
 	return len(rsm.resampled)
@@ -189,7 +204,12 @@ func (rsm resampler44To8L) Get(ind int) (int16, error) {
 	return rsm.resampled[ind], nil
 }
 func TestResample44To8L(t *testing.T) {
-	var tObj testutils.TestObj = testutils.TestObj{}.New(testutils.SinWave{}.New(0, 50, 44100, 8000), testutils.TestResampler(&resampler44To8L{}), 10, t)
+	defer func() {
+		if r := recover(); r != nil {
+			t.Error(r)
+		}
+	}()
+	var tObj testutils.TestObj = testutils.TestObj{}.New(testutils.SinWave{}.New(0, 55, 44000, 8000), testutils.TestResampler(&resampler44To8L{}), 10, t, &testutils.TestOpts{false, "../../../../plots"})
 	err := tObj.Run()
 	if !assert.NoError(t, err, "failed to run resampler") {
 		t.Error(err)
@@ -208,11 +228,10 @@ func (resampler44To16L) Copy() testutils.TestResampler {
 	return new(resampler44To16L)
 }
 func (resampler44To16L) String() string {
-	return "44100_to_16000_resamplerL"
+	return "44000_to_16000_resamplerL"
 }
 func (rsm *resampler44To16L) Resample(inp []int16) error {
-	resamplerl.Resample44To16L(inp, rsm.resampled)
-	return nil
+	return resamplerl.Resample44To16L(inp, &rsm.resampled)
 }
 func (rsm resampler44To16L) OutLen() int {
 	return len(rsm.resampled)
@@ -227,7 +246,12 @@ func (rsm resampler44To16L) Get(ind int) (int16, error) {
 	return rsm.resampled[ind], nil
 }
 func TestResample44To16L(t *testing.T) {
-	var tObj testutils.TestObj = testutils.TestObj{}.New(testutils.SinWave{}.New(0, 50, 44100, 16000), testutils.TestResampler(&resampler44To16L{}), 10, t)
+	defer func() {
+		if r := recover(); r != nil {
+			t.Error(r)
+		}
+	}()
+	var tObj testutils.TestObj = testutils.TestObj{}.New(testutils.SinWave{}.New(0, 55, 44000, 16000), testutils.TestResampler(&resampler44To16L{}), 10, t, &testutils.TestOpts{false, "../../../../plots"})
 	err := tObj.Run()
 	if !assert.NoError(t, err, "failed to run resampler") {
 		t.Error(err)
@@ -249,8 +273,7 @@ func (resampler48To8L) String() string {
 	return "48000_to_8000_resamplerL"
 }
 func (rsm *resampler48To8L) Resample(inp []int16) error {
-	resamplerl.Resample48To8L(inp, rsm.resampled)
-	return nil
+	return resamplerl.Resample48To8L(inp, &rsm.resampled)
 }
 func (rsm resampler48To8L) OutLen() int {
 	return len(rsm.resampled)
@@ -265,7 +288,12 @@ func (rsm resampler48To8L) Get(ind int) (int16, error) {
 	return rsm.resampled[ind], nil
 }
 func TestResample48To8L(t *testing.T) {
-	var tObj testutils.TestObj = testutils.TestObj{}.New(testutils.SinWave{}.New(0, 50, 48000, 8000), testutils.TestResampler(&resampler48To8L{}), 10, t)
+	defer func() {
+		if r := recover(); r != nil {
+			t.Error(r)
+		}
+	}()
+	var tObj testutils.TestObj = testutils.TestObj{}.New(testutils.SinWave{}.New(0, 55, 48000, 8000), testutils.TestResampler(&resampler48To8L{}), 10, t, &testutils.TestOpts{false, "../../../../plots"})
 	err := tObj.Run()
 	if !assert.NoError(t, err, "failed to run resampler") {
 		t.Error(err)
@@ -287,8 +315,7 @@ func (resampler48To16L) String() string {
 	return "48000_to_16000_resamplerL"
 }
 func (rsm *resampler48To16L) Resample(inp []int16) error {
-	resamplerl.Resample48To16L(inp, rsm.resampled)
-	return nil
+	return resamplerl.Resample48To16L(inp, &rsm.resampled)
 }
 func (rsm resampler48To16L) OutLen() int {
 	return len(rsm.resampled)
@@ -303,7 +330,12 @@ func (rsm resampler48To16L) Get(ind int) (int16, error) {
 	return rsm.resampled[ind], nil
 }
 func TestResample48To16L(t *testing.T) {
-	var tObj testutils.TestObj = testutils.TestObj{}.New(testutils.SinWave{}.New(0, 50, 48000, 16000), testutils.TestResampler(&resampler48To16L{}), 10, t)
+	defer func() {
+		if r := recover(); r != nil {
+			t.Error(r)
+		}
+	}()
+	var tObj testutils.TestObj = testutils.TestObj{}.New(testutils.SinWave{}.New(0, 55, 48000, 16000), testutils.TestResampler(&resampler48To16L{}), 10, t, &testutils.TestOpts{false, "../../../../plots"})
 	err := tObj.Run()
 	if !assert.NoError(t, err, "failed to run resampler") {
 		t.Error(err)

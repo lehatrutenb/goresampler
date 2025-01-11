@@ -54,7 +54,13 @@ func (rsm resamplerSpline) Get(ind int) (int16, error) {
 }
 
 func TestResampleSpline48To32(t *testing.T) {
-	var tObj testutils.TestObj = testutils.TestObj{}.New(testutils.SinWave{}.New(0, 50, 48000, 32000), testutils.TestResampler(&resamplerSpline{inRate: 48000, outRate: 32000}), 10, t)
+	defer func() {
+		if r := recover(); r != nil {
+			t.Error(r)
+		}
+	}()
+
+	var tObj testutils.TestObj = testutils.TestObj{}.New(testutils.SinWave{}.New(0, 50, 48000, 32000), testutils.TestResampler(&resamplerSpline{inRate: 48000, outRate: 32000}), 10, t, nil)
 	err := tObj.Run()
 	if !assert.NoError(t, err, "failed to run resampler") {
 		t.Error(err)

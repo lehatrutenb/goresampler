@@ -59,12 +59,18 @@ type TestResult struct {
 	OutRate     int
 }
 
+type TestOpts struct {
+	ToCrSF      bool
+	OutPlotPath string
+}
+
 type TestObj struct {
 	Tw     TestWave
 	Tr     MTTestResampler
 	Tres   TestResult
 	RunAmt int // to measure time (in struct to later divide) - but not write large values not to affect results
 	t      *testing.T
+	opts   TestOpts
 }
 
 func (MTTestResampler) Seed(int) {
@@ -108,9 +114,13 @@ func (tr MTTestResampler) String() string {
 	return tr.trs[0].String()
 }
 
-func (TestObj) New(tw TestWave, tr TestResampler, runAmt int, t *testing.T) TestObj {
+// New - expected nil as default opts value
+func (TestObj) New(tw TestWave, tr TestResampler, runAmt int, t *testing.T, opts *TestOpts) TestObj {
+	if opts == nil {
+		opts = &TestOpts{ToCrSF: false, OutPlotPath: SAVE_PATH}
+	}
 	return TestObj{
-		Tw: tw, Tr: MTTestResampler{}.New(tr, tw.NumChannels()), Tres: TestResult{}, RunAmt: runAmt, t: t,
+		Tw: tw, Tr: MTTestResampler{}.New(tr, tw.NumChannels()), Tres: TestResult{}, RunAmt: runAmt, t: t, opts: *opts,
 	}
 }
 
@@ -165,6 +175,7 @@ func (tObj *TestObj) Run() error {
 
 	outWave := make([]int16, tObj.Tr.OutLen())
 	CorrectW := make([]int16, tObj.Tr.OutLen())
+
 	for i := 0; i < tObj.Tr.OutLen(); i++ { // cmp results
 		got, err1 := tObj.Tr.Get(i)
 		if err1 != nil {
@@ -201,6 +212,19 @@ func (tObj *TestObj) Run() error {
 	tObj.Tres.Te.SqProc5 /= float64(tObj.Tw.OutLen())
 	tObj.Tres.Te.SqProc10 /= float64(tObj.Tw.OutLen())
 	tObj.Tres.Te.SqProc20 /= float64(tObj.Tw.OutLen())
+
+	// small check for resampler correctness
+	if tObj.Tres.Te.SqProc20 >= 0.2 { // if too large error too often
+		tObj.t.Logf("too large error too often: tObj.Tres.Te.SqProc20=%f", tObj.Tres.Te.SqProc20)
+		tObj.t.Fail()
+	}
+
+	tCorr := float64(tObj.Tw.OutLen()) / float64(tObj.Tw.OutRate())
+	tGot := float64(len(tObj.Tres.Resampeled)) / float64(tObj.Tres.OutRate)
+	if math.Abs(tCorr-tGot) >= 1e-5 { // if got just math error in time of resampled
+		tObj.t.Logf("too large time difference: correct:%f got:%f", tCorr, tGot)
+		tObj.t.Fail()
+	}
 
 	tObj.Tres.CorrectW = CorrectW
 
