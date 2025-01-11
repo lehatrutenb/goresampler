@@ -12,12 +12,13 @@ gitCommit:
 	-mkdir plots/latest/legacy
 
 runPlotting:
-	python3 ./resampler/internal/test_utils/plots.py --plot-path="./plots/latest/" # it's written here cause running from go code looks dirty
+	python3 ./resampler/internal/test_utils/plots.py --plot-path1="./plots/latest/" --plot-path2="./plots/latest/legacy/" --workers-amt=16 # it's written here cause running from go code looks dirty
 
 runTest:
-	go test -count=1 -v ./resampler/internal/resample/
+	-go test -count=1 -v ./resampler/internal/resample/
+	-go test -count=1 -v ./resampler/internal/resample/resamplerl
 	make runPlotting
 
 runGenerate:
-	-rm resampler/internal/resample/legacy_resampler/legacy_resample_test.go
-	go run ./resampler/internal/test_utils/legacy_gen/gen_legacy_tests.go
+	-rm resampler/internal/resample/resamplerl/legacy_resample_test.go
+	go run ./resampler/internal/test_utils/legacy_gen/gen_legacy_tests.go -o ./resampler/internal/resample/resamplerl/legacy_resample_test.go

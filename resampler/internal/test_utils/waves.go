@@ -3,11 +3,12 @@ package testutils
 import (
 	"errors"
 	"fmt"
-    "github.com/go-audio/wav"
-    "os"
 	"math"
+	"os"
 	"resampler/internal/utils"
-    "github.com/go-audio/audio"
+
+	"github.com/go-audio/audio"
+	"github.com/go-audio/wav"
 )
 
 type SinWave struct {
@@ -44,11 +45,11 @@ func (sw SinWave) OutRate() int {
 }
 
 func (SinWave) WithResampled() bool {
-    return true
+	return true
 }
 
 func (SinWave) NumChannels() int {
-    return 1
+	return 1
 }
 
 func (sw SinWave) GetIn(ind int) (int16, error) {
@@ -75,62 +76,84 @@ func (sw SinWave) String() string {
 }
 
 type RealWave struct {
-    fName string
-    buf *audio.IntBuffer
+	fName  string
+	inBuf  *audio.IntBuffer
+	outBuf *audio.IntBuffer
 }
 
 var PATH_TO_BASE_WAVES = "../../../base_waves/"
 
+// changed panic to fatal to catch in tests
+func parseWaveOrSkip(fName *string) *audio.IntBuffer {
+	if fName == nil {
+		return nil
+	}
+
+	f, err := os.Open(*fName)
+	defer f.Close()
+	if err != nil {
+		panic(err)
+	}
+	dec := wav.NewDecoder(f)
+	dec.ReadInfo()
+	intBuff, err := dec.FullPCMBuffer()
+	if err != nil {
+		panic(err)
+	}
+
+	if intBuff.SourceBitDepth != 16 {
+		panic(errors.New("expected to get wave with int16 inside"))
+	}
+
+	return intBuff
+}
+
 // don't want to return err there not to caught it in test code
-func (RealWave) New(fInd int, rate int) TestWave {
-    var realWaveFiles map[int]string = map[int]string{0:"base1",1:"base2",2:"base3"}
+func (RealWave) New(fInd int, inRate int, outRate *int) TestWave {
+	var realWaveFiles map[int]string = map[int]string{0: "base1", 1: "base2", 2: "base3"}
 
-    fName := realWaveFiles[fInd]
-    f, err := os.Open(fmt.Sprintf("%s%s/%s_%d.wav", PATH_TO_BASE_WAVES, fName, fName, rate))
-    defer f.Close()
-    if err != nil {
-        panic(err)
-    }
-    dec := wav.NewDecoder(f)
-    dec.ReadInfo()
-    intBuff, err := dec.FullPCMBuffer()
-    if err != nil {
-        panic(err)
-    }
-    
-    if intBuff.SourceBitDepth != 16 {
-        panic(errors.New("expected to get wave with int16 inside"))
-    }
+	fName := realWaveFiles[fInd]
+	fInName := fmt.Sprintf("%s%s/%s_%d.wav", PATH_TO_BASE_WAVES, fName, fName, inRate)
+	var fOutName *string = nil
+	if outRate != nil {
+		fOutName = new(string)
+		*fOutName = fmt.Sprintf("%s%s/%s_%d.wav", PATH_TO_BASE_WAVES, fName, fName, outRate)
+	}
 
-    return RealWave{fName, intBuff}
+	return RealWave{fName, parseWaveOrSkip(&fInName), parseWaveOrSkip(fOutName)}
 }
 
 func (RealWave) Seed(int) {}
 
 func (rw RealWave) InLen() int {
-    return rw.buf.NumFrames() * rw.buf.Format.NumChannels  // == len(buf.Data)
+	return rw.inBuf.NumFrames() * rw.inBuf.Format.NumChannels // == len(buf.Data)
 }
 
-func (RealWave) OutLen() int {
-    panic(errors.New("call unimplemented func"))
-    //return -1
+func (rw RealWave) OutLen() int {
+	if rw.outBuf == nil {
+		panic(errors.New("call unimplemented func"))
+	}
+
+	return rw.outBuf.NumFrames() * rw.outBuf.Format.NumChannels // == len(buf.Data)
 }
 
 func (rw RealWave) InRate() int {
-	return rw.buf.Format.SampleRate
+	return rw.inBuf.Format.SampleRate
 }
 
-func (RealWave) OutRate() int {
-    panic(errors.New("call unimplemented func"))
-	//return -1
+func (rw RealWave) OutRate() int {
+	if rw.outBuf == nil {
+		panic(errors.New("call unimplemented func"))
+	}
+	return rw.outBuf.Format.SampleRate
 }
 
 func (rw RealWave) NumChannels() int {
-    return rw.buf.Format.NumChannels
+	return rw.inBuf.Format.NumChannels
 }
 
-func (RealWave) WithResampled() bool {
-    return false
+func (rw RealWave) WithResampled() bool {
+	return rw.outBuf != nil
 }
 
 func (rw RealWave) GetIn(ind int) (int16, error) {
@@ -138,14 +161,20 @@ func (rw RealWave) GetIn(ind int) (int16, error) {
 		return 0, errors.New("out of bounds")
 	}
 
-	return int16(rw.buf.Data[ind]), nil
+	return int16(rw.inBuf.Data[ind]), nil
 }
 
-func (RealWave) GetOut(ind int) (int16, error) {
-    return -1, errors.New("call unimplemented func")
+func (rw RealWave) GetOut(ind int) (int16, error) {
+	if rw.outBuf == nil {
+		panic(errors.New("call unimplemented func"))
+	}
+	if ind >= rw.OutLen() {
+		return 0, errors.New("out of bounds")
+	}
+
+	return int16(rw.outBuf.Data[ind]), nil
 }
 
 func (rw RealWave) String() string {
 	return fmt.Sprintf("RealWave:%s", rw.fName)
 }
-

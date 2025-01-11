@@ -138,7 +138,7 @@ func (tObj TestObj) Save(dirName string) error {
 		return err
 	}
 
-	baseFName := fmt.Sprintf("%s/%s/%s:%s", SAVE_PATH, dirName, tObj.Tr, tObj.Tw)
+	baseFName := fmt.Sprintf("%s/%s/%s:%s", tObj.opts.OutPlotPath, dirName, tObj.Tr, tObj.Tw)
 	err = os.WriteFile(fmt.Sprintf("%s:small", baseFName), bufS, 0666)
 	if err != nil {
 		tObj.t.Error("failed to save metrics file")
@@ -156,6 +156,9 @@ func (tObj TestObj) Save(dirName string) error {
 			tObj.t.Error("failed to plot using go")
 			return err
 		}
+	}
+	if !tObj.opts.ToCrSF {
+		return nil
 	}
 	if err := tObj.saveSoundFile(baseFName); err != nil {
 		tObj.t.Error("failed to save wav files")
