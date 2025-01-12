@@ -109,15 +109,19 @@ func parseWaveOrSkip(fName *string) *audio.IntBuffer {
 }
 
 // don't want to return err there not to caught it in test code
-func (RealWave) New(fInd int, inRate int, outRate *int) TestWave {
-	var realWaveFiles map[int]string = map[int]string{0: "base1", 1: "base2", 2: "base3"}
+func (RealWave) New(fInd int, inRate int, outRate *int, pathToBaseWaves *string) TestWave {
+	if pathToBaseWaves == nil {
+		pathToBaseWaves = new(string)
+		*pathToBaseWaves = PATH_TO_BASE_WAVES
+	}
+	var realWaveFiles map[int]string = map[int]string{0: "base1", 1: "base2", 2: "base3", 3: "base4"}
 
 	fName := realWaveFiles[fInd]
-	fInName := fmt.Sprintf("%s%s/%s_%d.wav", PATH_TO_BASE_WAVES, fName, fName, inRate)
+	fInName := fmt.Sprintf("%s%s/%s_%d.wav", *pathToBaseWaves, fName, fName, inRate)
 	var fOutName *string = nil
 	if outRate != nil {
 		fOutName = new(string)
-		*fOutName = fmt.Sprintf("%s%s/%s_%d.wav", PATH_TO_BASE_WAVES, fName, fName, outRate)
+		*fOutName = fmt.Sprintf("%s%s/%s_%d.wav", *pathToBaseWaves, fName, fName, *outRate)
 	}
 
 	return RealWave{fName, parseWaveOrSkip(&fInName), parseWaveOrSkip(fOutName)}

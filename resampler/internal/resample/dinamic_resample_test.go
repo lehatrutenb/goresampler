@@ -60,7 +60,7 @@ func TestResampleSpline48To32(t *testing.T) {
 		}
 	}()
 
-	var tObj testutils.TestObj = testutils.TestObj{}.New(testutils.SinWave{}.New(0, 50, 48000, 32000), testutils.TestResampler(&resamplerSpline{inRate: 48000, outRate: 32000}), 10, t, nil)
+	var tObj testutils.TestObj = testutils.TestObj{}.New(testutils.SinWave{}.New(0, 55, 48000, 32000), testutils.TestResampler(&resamplerSpline{inRate: 48000, outRate: 32000}), 10, t, nil)
 	err := tObj.Run()
 	if !assert.NoError(t, err, "failed to run resampler") {
 		t.Error(err)
@@ -72,17 +72,37 @@ func TestResampleSpline48To32(t *testing.T) {
 	}
 }
 
-/* Not really need anymore? (after test rework)
-func TestResampleSpline48To32SmallBorders(t *testing.T) {
-	var tObj testutils.TestObj = testutils.TestObj{}.New(testutils.SinWave{}.New(0, 3, 48000, 32000), testutils.TestResampler(&resamplerSpline{inRate: 48000, outRate: 32000}), 10, t)
+func TestResampleSpline11To8(t *testing.T) {
+	defer func() {
+		if r := recover(); r != nil {
+			t.Error(r)
+		}
+	}()
+	var tObj testutils.TestObj = testutils.TestObj{}.New(testutils.SinWave{}.New(0, 55, 11000, 8000), testutils.TestResampler(&resamplerSpline{inRate: 11000, outRate: 8000}), 10, t, nil)
 	err := tObj.Run()
 	if !assert.NoError(t, err, "failed to run resampler") {
 		t.Error(err)
 	}
-
 	err = tObj.Save("latest")
 	if !assert.NoError(t, err, "failed to save test results") {
 		t.Error(err)
 	}
 }
-*/
+
+func TestResampleSplineRealWave0(t *testing.T) {
+	defer func() {
+		if r := recover(); r != nil {
+			t.Error(r)
+		}
+	}()
+	outR := 8000
+	var tObj testutils.TestObj = testutils.TestObj{}.New(testutils.RealWave{}.New(0, 11025, &outR, nil), testutils.TestResampler(&resamplerSpline{inRate: 11025, outRate: 8000}), 10, t, testutils.TestOpts{}.New().WithCrSF(true))
+	err := tObj.Run()
+	if !assert.NoError(t, err, "failed to run resampler") {
+		t.Error(err)
+	}
+	err = tObj.Save("latest")
+	if !assert.NoError(t, err, "failed to save test results") {
+		t.Error(err)
+	}
+}
