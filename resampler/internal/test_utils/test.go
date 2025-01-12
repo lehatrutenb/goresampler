@@ -114,6 +114,23 @@ func (tr MTTestResampler) String() string {
 	return tr.trs[0].String()
 }
 
+func (TestOpts) New() *TestOpts {
+	res := new(TestOpts)
+	res.OutPlotPath = SAVE_PATH
+	res.ToCrSF = false
+	return res
+}
+
+func (to *TestOpts) WithPlotPath(outPlotPath string) *TestOpts {
+	to.OutPlotPath = outPlotPath
+	return to
+}
+
+func (to *TestOpts) WithCrSF(toCrSF bool) *TestOpts {
+	to.ToCrSF = toCrSF
+	return to
+}
+
 // New - expected nil as default opts value
 func (TestObj) New(tw TestWave, tr TestResampler, runAmt int, t *testing.T, opts *TestOpts) TestObj {
 	if opts == nil {
@@ -187,7 +204,7 @@ func (tObj *TestObj) Run() error {
 		if tObj.Tw.WithResampled() {
 			corr, err2 := tObj.Tw.GetOut(i)
 			if err2 != nil {
-				tObj.t.Error("failed to get correct output wave")
+				tObj.t.Errorf("failed to get correct output wave ; ind: %d ; waveLen: %d ; resampled waveLen: %d", i, tObj.Tw.OutLen(), tObj.Tr.OutLen())
 				return err2
 			}
 
