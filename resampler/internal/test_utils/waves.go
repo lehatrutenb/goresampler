@@ -130,7 +130,7 @@ func (RealWave) New(fInd int, inRate int, outRate *int, pathToBaseWaves *string)
 func (RealWave) Seed(int) {}
 
 func (rw RealWave) InLen() int {
-	return rw.inBuf.NumFrames() * rw.inBuf.Format.NumChannels // == len(buf.Data)
+	return len(rw.inBuf.Data) // == rw.inBuf.NumFrames() * rw.inBuf.Format.NumChannels
 }
 
 func (rw RealWave) OutLen() int {
@@ -180,5 +180,5 @@ func (rw RealWave) GetOut(ind int) (int16, error) {
 }
 
 func (rw RealWave) String() string {
-	return fmt.Sprintf("RealWave:%s", rw.fName)
+	return fmt.Sprintf("RealWave:%s_%d", rw.fName, rw.InRate())
 }
