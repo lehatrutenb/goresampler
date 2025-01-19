@@ -1,0 +1,26 @@
+=== RUN   TestResample8To16L
+--- PASS: TestResample8To16L (0.97s)
+=== RUN   TestResample11To8L
+    test.go:235: too large error too often: tObj.Tres.Te.SqProc20=0.502818
+--- FAIL: TestResample11To8L (0.45s)
+=== RUN   TestResample11To16L
+    test.go:235: too large error too often: tObj.Tres.Te.SqProc20=0.501714
+--- FAIL: TestResample11To16L (0.96s)
+=== RUN   TestResample16To8L
+--- PASS: TestResample16To8L (0.49s)
+=== RUN   TestResample44To8L
+    test.go:235: too large error too often: tObj.Tres.Te.SqProc20=0.464239
+--- FAIL: TestResample44To8L (1.08s)
+=== RUN   TestResample44To16L
+    test.go:235: too large error too often: tObj.Tres.Te.SqProc20=0.476665
+--- FAIL: TestResample44To16L (1.55s)
+=== RUN   TestResample48To8L
+--- PASS: TestResample48To8L (1.02s)
+=== RUN   TestResample48To16L
+--- PASS: TestResample48To16L (1.46s)
+=== RUN   TestResample11To8RealWaveL
+    test.go:235: too large error too often: tObj.Tres.Te.SqProc20=0.502818
+--- FAIL: TestResample11To8RealWaveL (0.88s)
+FAIL
+FAIL	resampler/internal/resample/resamplerl	8.882s
+FAIL
