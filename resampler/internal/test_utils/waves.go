@@ -182,3 +182,69 @@ func (rw RealWave) GetOut(ind int) (int16, error) {
 func (rw RealWave) String() string {
 	return fmt.Sprintf("RealWave:%s_%d", rw.fName, rw.InRate())
 }
+
+type CutWave struct {
+	tw      TestWave
+	prefCut int
+	cutAmt  int
+}
+
+/*
+prefCut - amt of samples to cut at the beginning
+cutAmt - amt of samples to save after prefCut (not to cut)
+*/
+func (CutWave) New(w TestWave, prefCut int, cutAmt int) TestWave {
+	res := CutWave{tw: w, prefCut: prefCut, cutAmt: cutAmt}
+	if prefCut*w.NumChannels()+res.InLen() > w.InLen() || prefCut*w.NumChannels()*res.tw.OutRate()/res.tw.InRate()+res.OutLen() > w.OutLen() {
+		panic("got incorrect cut params - too large for wave len")
+	}
+	return res
+}
+
+func (CutWave) Seed(int) {}
+
+func (rw CutWave) InLen() int {
+	return rw.cutAmt * rw.tw.NumChannels()
+}
+
+func (rw CutWave) OutLen() int {
+	return rw.InLen() * rw.tw.OutRate() / rw.tw.InRate()
+}
+
+func (rw CutWave) InRate() int {
+	return rw.tw.InRate()
+}
+
+func (rw CutWave) OutRate() int {
+	return rw.tw.OutRate()
+}
+
+func (rw CutWave) NumChannels() int {
+	return rw.tw.NumChannels()
+}
+
+func (rw CutWave) WithResampled() bool {
+	return rw.tw.WithResampled()
+}
+
+func (rw CutWave) GetIn(ind int) (int16, error) {
+	pref := rw.prefCut * rw.tw.NumChannels()
+	if ind >= rw.InLen() {
+		return 0, errors.New("out of bounds")
+	}
+
+	return rw.tw.GetIn(pref + ind)
+}
+
+func (rw CutWave) GetOut(ind int) (int16, error) {
+	pref := rw.prefCut * rw.tw.NumChannels() * rw.tw.OutRate() / rw.tw.InRate()
+	if ind >= rw.OutLen() {
+		return 0, errors.New("out of bounds")
+	}
+
+	return rw.tw.GetOut(pref + ind)
+}
+
+func (rw CutWave) String() string {
+	return fmt.Sprintf("CutWave:%s_[%d:%d]", rw.tw.String(), rw.prefCut, rw.prefCut+rw.cutAmt)
+}

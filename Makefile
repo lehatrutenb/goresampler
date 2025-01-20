@@ -17,8 +17,8 @@ runPlotting:
 
 #if want to process later better to use -json, but I don't think I want to
 runTest:
-	-go test -count=1 -v ./resampler/internal/resample/ | tee ./plots/latest/!testRes
-	-go test -count=1 -v ./resampler/internal/resample/resamplerl | tee ./plots/latest/legacy/!testRes
+	-go test -count=1 -bench=. -benchmem -v ./resampler/internal/resample/ | tee ./plots/latest/!testRes
+	-go test -count=1 -bench=. -benchmem -v ./resampler/internal/resample/resamplerl | tee ./plots/latest/legacy/!testRes
 	make runPlotting
 
 clearTestDir:

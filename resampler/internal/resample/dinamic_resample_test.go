@@ -205,3 +205,21 @@ func TestResampleFFT11025To8(t *testing.T) { // just test that everything counts
 		t.Error(err)
 	}
 }
+
+func TestResampleFFT11025To8RealWave(t *testing.T) {
+	defer func() {
+		if r := recover(); r != nil {
+			t.Error(r)
+		}
+	}()
+	outR := 8000
+	var tObj testutils.TestObj = testutils.TestObj{}.New(testutils.CutWave{}.New(testutils.RealWave{}.New(0, 11025, &outR, &testutils.PATH_TO_BASE_WAVES), 11025, 2*11025), testutils.TestResampler(&resamplerFFT{inRate: 11025, outRate: 8000}), 1, t, &testutils.TestOpts{true, "../../../plots"})
+	err := tObj.Run()
+	if !assert.NoError(t, err, "failed to run resampler") {
+		t.Error(err)
+	}
+	err = tObj.Save("latest")
+	if !assert.NoError(t, err, "failed to save test results") {
+		t.Error(err)
+	}
+}

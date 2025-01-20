@@ -31,6 +31,8 @@ func main() {
 			strRepr := fmt.Sprintf("%s_to_%s_resampler%s", frStr, toStr, leg)
 			rFuncName := fmt.Sprintf("Resample%sTo%s%s", fr, to, leg)
 			tFuncName := fmt.Sprintf("TestResample%sTo%s%s", fr, to, leg)
+			sinWavewTime := 55 // sec // 55 to div by 11
+			testRunAmt := 10   // amt times to run test - the more the better time measure will get (but > 10 questionable because of caches)
 
 			tUtilsS := "resampler/internal/test_utils"
 			assertS := "github.com/stretchr/testify/assert"
@@ -75,9 +77,9 @@ func main() {
 				).Call(),
 
 				Var().Id("tObj").Qual(tUtilsS, "TestObj").Op("=").Qual(tUtilsS, "TestObj").Values().Dot("New").Call(
-					Qual(tUtilsS, "SinWave").Values().Dot("New").Call(Lit(0), Lit(55), Lit(frInt), Lit(toInt)), // 55 to div by 11
+					Qual(tUtilsS, "SinWave").Values().Dot("New").Call(Lit(0), Lit(sinWavewTime), Lit(frInt), Lit(toInt)),
 					Qual(tUtilsS, "TestResampler").Call(Op("&").Id(sName).Values()),
-					Lit(10),
+					Lit(testRunAmt),
 					Id("t"),
 					Op("&").Qual(tUtilsS, "TestOpts").Values(Lit(false), Lit("../../../../plots")),
 				),
