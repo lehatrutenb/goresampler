@@ -1,0 +1,19 @@
+=== RUN   TestResampleSpline48To32
+--- PASS: TestResampleSpline48To32 (2.66s)
+=== RUN   TestResampleSpline11To8
+--- PASS: TestResampleSpline11To8 (0.58s)
+=== RUN   TestResampleSplineRealWave0
+    test.go:235: too large error too often: tObj.Tres.Te.SqProc20=0.438819
+--- FAIL: TestResampleSplineRealWave0 (4.48s)
+=== RUN   TestResampleFFT8To8
+--- PASS: TestResampleFFT8To8 (1.60s)
+=== RUN   TestResampleFFT16To8
+--- PASS: TestResampleFFT16To8 (4.10s)
+=== RUN   TestResampleFFT11025To8
+--- PASS: TestResampleFFT11025To8 (2.26s)
+=== RUN   TestResampleFFT11025To8RealWave
+--- PASS: TestResampleFFT11025To8RealWave (16.54s)
+FAIL
+exit status 1
+FAIL	resampler/internal/resample	32.239s
+FAIL
