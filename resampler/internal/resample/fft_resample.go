@@ -3,8 +3,6 @@ package resample
 import (
 	"math"
 	"resampler/internal/utils"
-
-	"github.com/mjibson/go-dsp/fft"
 )
 
 type FFTResampler struct {
@@ -108,8 +106,8 @@ func forwardFFT(re, im []float32) {
 	arrBitReverse(re)
 	arrBitReverse(im)
 	for layer := 0; (1 << layer) < len(re); layer++ {
-		sin := -sin(pi() / float32(int(1)<<layer)) // will use to shift in freq domain
-		cos := cos(pi() / float32(int(1)<<layer))
+		cSinT, cCosT := math.Sincos(float64(pi() / float32(int(1)<<layer)))
+		cSin, cCos := -float32(cSinT), float32(cCosT)
 		cRe := float32(1) // currect multipliers not to copy paste code
 		cIm := float32(0)
 
@@ -124,16 +122,9 @@ func forwardFFT(re, im []float32) {
 				re[j] += chRe
 				im[j] += chIm
 			}
-			cRe, cIm = cRe*cos-cIm*sin, cRe*sin+cIm*cos
+			cRe, cIm = cRe*cCos-cIm*cSin, cRe*cSin+cIm*cCos
 		}
 	}
-}
-
-func BackwardFFT2(re, im []float32, startLen int) {
-	for i := 0; i < len(re); i++ {
-		im[i] *= -1
-	}
-	forwardFFT(re, im)
 }
 
 func backwardFFT(re, im []float32, startLen int) {
@@ -193,27 +184,81 @@ func fixFreqRulesAfterChangeFFT(re, im []float32) {
 	}
 }
 
+func chirpFilterCoefs(arrSz int) (forwRe, forwIm []float32, backwRe, backwIm []float32) {
+	res := make([]complex64, arrSz)
+	forwRe, forwIm = make([]float32, arrSz), make([]float32, arrSz)
+	backwRe, backwIm = make([]float32, arrSz), make([]float32, arrSz)
+	for i := 0; i < len(res); i++ {
+		cSin, cCos := float64(0), float64(1)
+		if i != 0 {
+			cSin, cCos = math.Sincos(math.Pi / float64(arrSz) * float64(i*i))
+		}
+		forwRe[i], forwIm[i] = float32(cCos), float32(cSin)
+		backwRe[i], backwIm[i] = float32(cCos), -float32(cSin)
+	}
+	return
+}
+
+func BluesteinFFT(re []float32) ([]float32, []float32) {
+	sLen := len(re)
+	fForwRe, fForwIm, fBackwRe, fBackwIm := chirpFilterCoefs(len(re))
+	setStrictP2Len(&re)
+	if len(re) < 2*sLen-1 {
+		re = append(re, 0)
+		setStrictP2Len(&re)
+	}
+	im := make([]float32, len(re))
+
+	for i := 0; i < sLen; i++ {
+		im[i] = re[i] * fBackwIm[i]
+		re[i] = re[i] * fBackwRe[i]
+	}
+
+	convArrRe := make([]float32, len(re))
+	convArrIm := make([]float32, len(re))
+
+	for i := 0; i < len(fForwRe); i++ {
+		convArrRe[i] = fForwRe[i]
+		convArrIm[i] = fForwIm[i]
+		if i != 0 {
+			convArrRe[len(re)-i] = fForwRe[i]
+			convArrIm[len(re)-i] = fForwIm[i]
+		}
+	}
+
+	forwardFFT(re, im)
+	forwardFFT(convArrRe, convArrIm)
+	for i := 0; i < len(re); i++ {
+		re[i], im[i] = re[i]*convArrRe[i]-im[i]*convArrIm[i], re[i]*convArrIm[i]+im[i]*convArrRe[i]
+	}
+	backwardFFT(re, im, len(re))
+
+	for i := 0; i < sLen; i++ {
+		fRe, fIm := fBackwRe[i], fBackwIm[i]
+		re[i], im[i] = re[i]*fRe-im[i]*fIm, re[i]*fIm+im[i]*fRe
+	}
+
+	return re[:sLen], im[:sLen]
+}
+
 func resample(re []float32, outArr []float32, inRate, outRate int, outLen int) {
 	startLen := len(re)
-	im := make([]float32, len(re))
-	in1 := make([]float64, len(re))
-	for i := 0; i < len(re); i++ {
-		in1[i] = float64(re[i])
-	}
-	res := fft.FFTReal(in1)
-	for i := 0; i < len(re); i++ {
-		re[i] = float32(real(res[i]))
-		im[i] = float32(imag(res[i]))
+
+	reCur := make([]float32, startLen)
+	for i := 0; i < startLen; i++ {
+		reCur[i] = re[i]
 	}
 
-	changeSampleRate(&re, &im, inRate, outRate, outLen)
+	reCur, im := BluesteinFFT(reCur)
 
-	fixFreqRulesAfterChangeFFT(re, im)
+	changeSampleRate(&reCur, &im, inRate, outRate, outLen)
 
-	backwardFFT(re, im, startLen)
+	fixFreqRulesAfterChangeFFT(reCur, im)
+
+	backwardFFT(reCur, im, startLen)
 
 	for i := 0; i < outLen; i++ {
-		outArr[i] = re[i]
+		outArr[i] = reCur[i]
 	}
 }
 
