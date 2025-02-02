@@ -2,7 +2,6 @@ package main
 
 import (
 	"errors"
-	"testing"
 
 	//"log"
 	"resampler/internal/resample"
@@ -11,8 +10,6 @@ import (
 
 	//"testing"
 	"fmt"
-
-	"github.com/stretchr/testify/assert"
 	//"github.com/stretchr/testify/assert"
 )
 
@@ -68,13 +65,13 @@ func (rsm resampler44To8L) Get(ind int) (int16, error) {
 }
 
 func main() {
-	t := &testing.T{}
+	//t := &testing.T{}
 	/*defer func() {
 		if r := recover(); r != nil {
 			t.Error(r)
 		}
 	}()*/
-	var tObj testutils.TestObj = testutils.TestObj{}.New(testutils.SinWave{}.New(0, 55, 44100, 8000), testutils.TestResampler(&resampler44To8L{}), 10, t, &testutils.TestOpts{false, "../../../../plots"})
+	/*var tObj testutils.TestObj = testutils.TestObj{}.New(testutils.SinWave{}.New(0, 55, 44100, 8000), testutils.TestResampler(&resampler44To8L{}), 10, t, &testutils.TestOpts{false, "../../../../plots"})
 	err := tObj.Run()
 	if !assert.NoError(t, err, "failed to run resampler") {
 		t.Error(err)
@@ -82,5 +79,36 @@ func main() {
 	err = tObj.Save("latest/legacy")
 	if !assert.NoError(t, err, "failed to save test results") {
 		t.Error(err)
+	}*/
+
+	/*n := 90317 * 11 // 1e6
+
+	//n += 220 - (n % 220)
+
+	in := make([]int16, n)
+	for i := 0; i < n; i++ {
+		in[i] = int16(rand.Int() % (1 << 16))
 	}
+
+	fftResampler := func() {
+		fftResampler := resample.FFTResampler{}.New(in, 11025, 8000)
+		fftResampler.ResampleFFT()
+	}
+
+	constResampler := func() {
+		out := make([]int16, 0)
+		resamplerl.Resample11To8L(in, &out)
+	}
+
+	_ = fftResampler
+	_ = constResampler
+
+	start := time.Now()
+
+	//constResampler()
+	fftResampler()
+
+	dur := time.Since(start)
+	fmt.Println(dur.Milliseconds())
+	//fftResampler.GetOutWave()*/
 }
