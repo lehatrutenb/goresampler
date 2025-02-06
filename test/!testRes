@@ -1,0 +1,65 @@
+=== RUN   TestResampleFFT11025To8
+--- PASS: TestResampleFFT11025To8 (3.53s)
+=== RUN   TestResampleFFT11025To8RealWave
+    test.go:266: too large error too often: tObj.Tres.Te.SqProc20=0.680911
+--- FAIL: TestResampleFFT11025To8RealWave (6.94s)
+FAIL
+exit status 1
+FAIL	resampler/internal/resample/resamplerfft	10.511s
+FAIL
+=== RUN   TestResampleSpline48To32
+--- PASS: TestResampleSpline48To32 (2.20s)
+=== RUN   TestResampleSpline11To8
+--- PASS: TestResampleSpline11To8 (0.35s)
+=== RUN   TestResampleSplineRealWave0
+    test.go:266: too large error too often: tObj.Tres.Te.SqProc20=0.438819
+    test.go:273: too large time difference: correct:219.951000 got:219.951250
+--- FAIL: TestResampleSplineRealWave0 (4.72s)
+FAIL
+exit status 1
+FAIL	resampler/internal/resample/resamplerspline	7.307s
+FAIL
+=== RUN   TestResample8To16L_SinWave
+--- PASS: TestResample8To16L_SinWave (0.64s)
+=== RUN   TestResample11To8L_SinWave
+--- PASS: TestResample11To8L_SinWave (0.24s)
+=== RUN   TestResample11To16L_SinWave
+--- PASS: TestResample11To16L_SinWave (0.75s)
+=== RUN   TestResample16To8L_SinWave
+--- PASS: TestResample16To8L_SinWave (0.12s)
+=== RUN   TestResample44To8L_SinWave
+--- PASS: TestResample44To8L_SinWave (0.57s)
+=== RUN   TestResample44To16L_SinWave
+--- PASS: TestResample44To16L_SinWave (0.46s)
+=== RUN   TestResample48To8L_SinWave
+--- PASS: TestResample48To8L_SinWave (0.59s)
+=== RUN   TestResample48To16L_SinWave
+--- PASS: TestResample48To16L_SinWave (0.55s)
+=== RUN   TestResample8To16L_RealWave
+    test.go:266: too large error too often: tObj.Tres.Te.SqProc20=0.841293
+--- FAIL: TestResample8To16L_RealWave (4.25s)
+=== RUN   TestResample11To8L_RealWave
+    test.go:266: too large error too often: tObj.Tres.Te.SqProc20=0.905348
+--- FAIL: TestResample11To8L_RealWave (3.05s)
+=== RUN   TestResample11To16L_RealWave
+    test.go:266: too large error too often: tObj.Tres.Te.SqProc20=0.885981
+--- FAIL: TestResample11To16L_RealWave (3.78s)
+=== RUN   TestResample16To8L_RealWave
+    test.go:266: too large error too often: tObj.Tres.Te.SqProc20=0.807614
+--- FAIL: TestResample16To8L_RealWave (3.47s)
+=== RUN   TestResample44To8L_RealWave
+    test.go:266: too large error too often: tObj.Tres.Te.SqProc20=0.883389
+--- FAIL: TestResample44To8L_RealWave (6.52s)
+=== RUN   TestResample44To16L_RealWave
+    test.go:266: too large error too often: tObj.Tres.Te.SqProc20=0.860755
+--- FAIL: TestResample44To16L_RealWave (7.00s)
+=== RUN   TestResample48To8L_RealWave
+    test.go:266: too large error too often: tObj.Tres.Te.SqProc20=0.879283
+--- FAIL: TestResample48To8L_RealWave (6.88s)
+=== RUN   TestResample48To16L_RealWave
+    test.go:266: too large error too often: tObj.Tres.Te.SqProc20=0.856412
+--- FAIL: TestResample48To16L_RealWave (7.43s)
+FAIL
+exit status 1
+FAIL	resampler/internal/resample/resamplerce	46.364s
+FAIL
