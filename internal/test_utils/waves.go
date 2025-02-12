@@ -196,7 +196,7 @@ cutAmt - amt of samples to save after prefCut (not to cut)
 func (CutWave) New(w TestWave, prefCut int, cutAmt int) TestWave {
 	res := CutWave{tw: w, prefCut: prefCut, cutAmt: cutAmt}
 	// why use float there - want to cut not only perfect dividable waves but with errors too ; count ceil to be sure that math round error won't cause overflow
-	if prefCut*w.NumChannels()+res.InLen() > w.InLen() || int(math.Ceil(float64(prefCut*w.NumChannels())*float64(res.tw.OutRate())/float64(res.tw.InRate())))+res.OutLen() > w.OutLen() {
+	if prefCut*w.NumChannels()+res.InLen() > w.InLen() { // || int(math.Ceil(float64(prefCut*w.NumChannels())*float64(res.tw.OutRate())/float64(res.tw.InRate())))+res.OutLen() > w.OutLen() { rmed cause it can't fit for in , but not fit for out
 		panic("got incorrect cut params - too large for wave len")
 	}
 	return res

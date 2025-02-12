@@ -19,6 +19,10 @@ func S16ToFloat(x int16) float32 {
 	return float32(x) / float32(1<<15)
 }
 
+func S16ToFloat64(x int16) float64 {
+	return float64(x) / float64(1<<15)
+}
+
 func FloatS16ToS16(x float32) int16 {
 	return int16(math.Max(math.Min(float64(x), 32767.0), -32768.0) + math.Copysign(0.5, float64(x)))
 }
@@ -32,6 +36,10 @@ func FloatToS16(x float32) int16 {
 	return int16(math.Max(math.Min(float64(x*32768.0), 32767.0), -32768.0) + math.Copysign(0.5, float64(x)))
 }
 
+func Float64ToS16(x float64) int16 {
+	return int16(math.Max(math.Min(float64(x*32768.0), 32767.0), -32768.0) + math.Copysign(0.5, float64(x)))
+}
+
 func AFloatToS16(xs []float32) []int16 {
 	res := make([]int16, len(xs))
 	for i, x := range xs {
@@ -40,10 +48,26 @@ func AFloatToS16(xs []float32) []int16 {
 	return res
 }
 
+func AFloat64ToS16(xs []float64) []int16 {
+	res := make([]int16, len(xs))
+	for i, x := range xs {
+		res[i] = Float64ToS16(x)
+	}
+	return res
+}
+
 func AS16ToFloat(xs []int16) []float32 {
 	res := make([]float32, len(xs))
 	for i, x := range xs {
 		res[i] = S16ToFloat(x)
+	}
+	return res
+}
+
+func AS16ToFloat64(xs []int16) []float64 {
+	res := make([]float64, len(xs))
+	for i, x := range xs {
+		res[i] = S16ToFloat64(x)
 	}
 	return res
 }

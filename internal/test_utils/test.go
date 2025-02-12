@@ -28,6 +28,7 @@ type TestResampler interface {
 	OutLen() int
 	OutRate() int
 	String() string
+	UnresampledInAmt() int
 }
 
 type MTTestResampler struct {
@@ -63,8 +64,8 @@ type TestOpts struct {
 	ToCrSF        bool
 	OutPlotPath   string
 	failOnHighErr bool
-	CreateReports bool
 	SFName        string
+	CalcDuration  bool
 }
 
 type TestObj struct {
@@ -117,23 +118,26 @@ func (tr MTTestResampler) String() string {
 	return tr.trs[0].String()
 }
 
+func (tr MTTestResampler) UnresampledInAmt() int {
+	return tr.trs[0].UnresampledInAmt()
+}
+
 func (TestOpts) NewDefault() *TestOpts {
 	res := new(TestOpts)
 	res.OutPlotPath = SAVE_PATH
 	res.ToCrSF = false
 	res.failOnHighErr = true
-	res.CreateReports = true
 	res.SFName = ""
 	return res
 }
 
-func (TestOpts) New(toCrSoundF bool, outPlotPath string) *TestOpts {
+func (TestOpts) New(toCrSoundF bool, outPlotPath string) *TestOpts { // TODO UNUSED PARAMS - RM
 	res := new(TestOpts)
 	res.OutPlotPath = SAVE_PATH
 	res.ToCrSF = false
 	res.failOnHighErr = true
-	res.CreateReports = true
 	res.SFName = ""
+	res.CalcDuration = true
 	return res
 }
 
@@ -152,8 +156,8 @@ func (to *TestOpts) NotFailOnHighErr() *TestOpts {
 	return to
 }
 
-func (to *TestOpts) SetCreateReports(toCreate bool) *TestOpts {
-	to.CreateReports = toCreate
+func (to *TestOpts) NotCalcDuration() *TestOpts {
+	to.CalcDuration = true
 	return to
 }
 
@@ -247,6 +251,9 @@ func (tObj *TestObj) Run() error {
 	tObj.Tres.Resampeled = outWave
 	tObj.Tres.InWave = inWave
 	tObj.Tres.SDur = time.Duration((sE.Sub(sT) / time.Duration(tObj.RunAmt)).Milliseconds()) // divide, no?
+	if !tObj.opts.CalcDuration {
+		tObj.Tres.SDur = -1
+	}
 	tObj.Tres.InRate = tObj.Tw.InRate()
 	tObj.Tres.OutRate = tObj.Tr.OutRate()
 	tObj.Tres.NumChannels = tObj.Tw.NumChannels()
@@ -267,10 +274,12 @@ func (tObj *TestObj) Run() error {
 		tObj.t.Fail()
 	}
 
-	tCorr := float64(tObj.Tw.OutLen()) / float64(tObj.Tw.OutRate())
-	tGot := float64(len(tObj.Tres.Resampeled)) / float64(tObj.Tres.OutRate)
-	if math.Abs(tCorr-tGot) >= 1e-5 { // if got just math error in time of resampled
-		tObj.t.Logf("too large time difference: correct:%f got:%f", tCorr, tGot)
+	tCorr := int64(tObj.Tw.InLen()) * int64(tObj.Tw.OutRate())
+	tGot := int64(len(tObj.Tres.Resampeled))*int64(tObj.Tw.InRate()) + int64(tObj.Tr.UnresampledInAmt())*int64(tObj.Tw.OutRate())
+	if math.Abs(float64(tCorr-tGot)) >= 1e-5 { // if got just math error in time of resampled
+		tCorrSec := float64(tObj.Tw.InLen()) / float64(tObj.Tw.InRate())
+		tGotSec := float64(len(tObj.Tres.Resampeled))/float64(tObj.Tres.OutRate) + float64(tObj.Tr.UnresampledInAmt())/float64(tObj.Tw.InRate())
+		tObj.t.Logf("too large time difference: correct:%f got:%f", tCorrSec, tGotSec) // yes, cmp other values, print these
 		tObj.t.Fail()
 	}
 
