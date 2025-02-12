@@ -24,6 +24,7 @@ func (resamplerFFT) New(inRate int, outRate int) resamplerFFT {
 func (rsm resamplerFFT) Copy() testutils.TestResampler {
 	res := new(resamplerFFT)
 	*res = rsm.New(rsm.inRate, rsm.outRate)
+	res.resampled = make([]int16, len(rsm.resampled))
 	return res
 }
 
@@ -32,10 +33,16 @@ func (rsm resamplerFFT) String() string {
 }
 
 func (rsm *resamplerFFT) Resample(inp []int16) error {
-	fr := resamplerfft.FFTResampler{}.New(inp, rsm.inRate, rsm.outRate)
-	fr.ResampleFFT()
-	rsm.resampled = fr.GetOutWave()
+	fr := resamplerfft.New(rsm.inRate, rsm.outRate)
+	fr.Resample(inp, rsm.resampled)
 	return nil
+}
+func (rsm *resamplerFFT) calcNeedSamplesPerOutAmt(outAmt int) int {
+	var inAmt int
+	fr := resamplerfft.New(rsm.inRate, rsm.outRate)
+	inAmt, outAmt = fr.CalcInOutSamplesPerOutAmt(outAmt)
+	rsm.resampled = make([]int16, outAmt)
+	return inAmt
 }
 
 func (rsm resamplerFFT) OutLen() int {
@@ -53,14 +60,148 @@ func (rsm resamplerFFT) Get(ind int) (int16, error) {
 	return rsm.resampled[ind], nil
 }
 
-func TestResampleFFT11025To8(t *testing.T) { // just test that everything counts fine
+func (rsm resamplerFFT) UnresampledInAmt() int {
+	return 0
+}
+
+func TestResampleFFT11025To8_SinWave(t *testing.T) {
+	inRate := 11025
+	outRate := 8000
+	waveDurS := float64(30)
 	defer func() {
 		if r := recover(); r != nil {
 			t.Error(r)
 		}
 	}()
+	rsm := resamplerFFT{}.New(inRate, outRate)
+	var tObj testutils.TestObj = testutils.TestObj{}.New(testutils.CutWave{}.New(testutils.SinWave{}.New(0, waveDurS, inRate, outRate), 0, rsm.calcNeedSamplesPerOutAmt((int(waveDurS)-10)*outRate)), &rsm, 1, t, testutils.TestOpts{}.NewDefault())
+	err := tObj.Run()
+	if !assert.NoError(t, err, "failed to run resampler") {
+		t.Error(err)
+	}
+	err = tObj.Save("rsm_const")
+	if !assert.NoError(t, err, "failed to save test results") {
+		t.Error(err)
+	}
+}
 
-	var tObj testutils.TestObj = testutils.TestObj{}.New(testutils.CutWave{}.New(testutils.SinWave{}.New(0, 100, 11025, 8000), 0, 90317*10), testutils.TestResampler(&resamplerFFT{inRate: 11025, outRate: 8000}), 2, t, nil) // 22580*2
+func TestResampleFFT16To8_SinWave(t *testing.T) {
+	inRate := 16000
+	outRate := 8000
+	waveDurS := float64(30)
+	defer func() {
+		if r := recover(); r != nil {
+			t.Error(r)
+		}
+	}()
+	rsm := resamplerFFT{}.New(inRate, outRate)
+	var tObj testutils.TestObj = testutils.TestObj{}.New(testutils.CutWave{}.New(testutils.SinWave{}.New(0, waveDurS, inRate, outRate), 0, rsm.calcNeedSamplesPerOutAmt((int(waveDurS)-10)*outRate)), &rsm, 1, t, testutils.TestOpts{}.NewDefault())
+	err := tObj.Run()
+	if !assert.NoError(t, err, "failed to run resampler") {
+		t.Error(err)
+	}
+	err = tObj.Save("rsm_const")
+	if !assert.NoError(t, err, "failed to save test results") {
+		t.Error(err)
+	}
+}
+
+func TestResampleFFT44100To8_SinWave(t *testing.T) {
+	inRate := 44100
+	outRate := 8000
+	waveDurS := float64(30)
+	defer func() {
+		if r := recover(); r != nil {
+			t.Error(r)
+		}
+	}()
+	rsm := resamplerFFT{}.New(inRate, outRate)
+	var tObj testutils.TestObj = testutils.TestObj{}.New(testutils.CutWave{}.New(testutils.SinWave{}.New(0, waveDurS, inRate, outRate), 0, rsm.calcNeedSamplesPerOutAmt((int(waveDurS)-10)*outRate)), &rsm, 1, t, testutils.TestOpts{}.NewDefault())
+	err := tObj.Run()
+	if !assert.NoError(t, err, "failed to run resampler") {
+		t.Error(err)
+	}
+	err = tObj.Save("rsm_const")
+	if !assert.NoError(t, err, "failed to save test results") {
+		t.Error(err)
+	}
+}
+
+func TestResampleFFT48To8_SinWave(t *testing.T) {
+	inRate := 48000
+	outRate := 8000
+	waveDurS := float64(30)
+	defer func() {
+		if r := recover(); r != nil {
+			t.Error(r)
+		}
+	}()
+	rsm := resamplerFFT{}.New(inRate, outRate)
+	var tObj testutils.TestObj = testutils.TestObj{}.New(testutils.CutWave{}.New(testutils.SinWave{}.New(0, waveDurS, inRate, outRate), 0, rsm.calcNeedSamplesPerOutAmt((int(waveDurS)-10)*outRate)), &rsm, 1, t, testutils.TestOpts{}.NewDefault())
+	err := tObj.Run()
+	if !assert.NoError(t, err, "failed to run resampler") {
+		t.Error(err)
+	}
+	err = tObj.Save("rsm_const")
+	if !assert.NoError(t, err, "failed to save test results") {
+		t.Error(err)
+	}
+}
+
+func TestResampleFFT44100To16_SinWave(t *testing.T) {
+	inRate := 44100
+	outRate := 16000
+	waveDurS := float64(30)
+	defer func() {
+		if r := recover(); r != nil {
+			t.Error(r)
+		}
+	}()
+	rsm := resamplerFFT{}.New(inRate, outRate)
+	var tObj testutils.TestObj = testutils.TestObj{}.New(testutils.CutWave{}.New(testutils.SinWave{}.New(0, waveDurS, inRate, outRate), 0, rsm.calcNeedSamplesPerOutAmt((int(waveDurS)-10)*outRate)), &rsm, 1, t, testutils.TestOpts{}.NewDefault())
+	err := tObj.Run()
+	if !assert.NoError(t, err, "failed to run resampler") {
+		t.Error(err)
+	}
+	err = tObj.Save("rsm_const")
+	if !assert.NoError(t, err, "failed to save test results") {
+		t.Error(err)
+	}
+}
+
+func TestResampleFFT48To16_SinWave(t *testing.T) {
+	inRate := 48000
+	outRate := 16000
+	waveDurS := float64(30)
+	defer func() {
+		if r := recover(); r != nil {
+			t.Error(r)
+		}
+	}()
+	rsm := resamplerFFT{}.New(inRate, outRate)
+	var tObj testutils.TestObj = testutils.TestObj{}.New(testutils.CutWave{}.New(testutils.SinWave{}.New(0, waveDurS, inRate, outRate), 0, rsm.calcNeedSamplesPerOutAmt((int(waveDurS)-10)*outRate)), &rsm, 1, t, testutils.TestOpts{}.NewDefault())
+	err := tObj.Run()
+	if !assert.NoError(t, err, "failed to run resampler") {
+		t.Error(err)
+	}
+	err = tObj.Save("rsm_const")
+	if !assert.NoError(t, err, "failed to save test results") {
+		t.Error(err)
+	}
+}
+
+func TestResampleFFT11025To8(t *testing.T) { // just test that everything counts fine
+	inRate := 11025
+	outRate := 8000
+	waveDurS := float64(60)
+	defer func() {
+		if r := recover(); r != nil {
+			t.Error(r)
+		}
+	}()
+	rsm := resamplerFFT{}.New(inRate, outRate)
+
+	var tObj testutils.TestObj = testutils.TestObj{}.New(testutils.CutWave{}.New(testutils.RealWave{}.New(0, inRate, &outRate, nil), 0, rsm.calcNeedSamplesPerOutAmt((int(waveDurS)-10)*outRate)), &rsm, 1, t, nil)
 	err := tObj.Run()
 	if !assert.NoError(t, err, "failed to run resampler") {
 		t.Error(err)
@@ -72,19 +213,23 @@ func TestResampleFFT11025To8(t *testing.T) { // just test that everything counts
 	}
 }
 
-func TestResampleFFT11025To8RealWave(t *testing.T) {
+func TestResampleFFT44100To16(t *testing.T) { // just test that everything counts fine
+	inRate := 48000
+	outRate := 16000
+	waveDurS := float64(60)
 	defer func() {
 		if r := recover(); r != nil {
 			t.Error(r)
 		}
 	}()
-	outR := 8000
-	//var tObj testutils.TestObj = testutils.TestObj{}.New(testutils.CutWave{}.New(testutils.RealWave{}.New(0, 11025, &outR, &testutils.PATH_TO_BASE_WAVES), 0, 22580*20), testutils.TestResampler(&resamplerFFT{inRate: 11025, outRate: 8000}), 1, t, &testutils.TestOpts{true, "../../../plots"})
-	var tObj testutils.TestObj = testutils.TestObj{}.New(testutils.CutWave{}.New(testutils.RealWave{}.New(0, 11025, &outR, &testutils.PATH_TO_BASE_WAVES), 0, 90317*10), testutils.TestResampler(&resamplerFFT{inRate: 11025, outRate: 8000}), 2, t, testutils.TestOpts{}.NewDefault().WithCrSF(true))
+	rsm := resamplerFFT{}.New(inRate, outRate)
+
+	var tObj testutils.TestObj = testutils.TestObj{}.New(testutils.CutWave{}.New(testutils.RealWave{}.New(0, inRate, &outRate, nil), 0, rsm.calcNeedSamplesPerOutAmt((int(waveDurS)-10)*outRate)), &rsm, 1, t, nil)
 	err := tObj.Run()
 	if !assert.NoError(t, err, "failed to run resampler") {
 		t.Error(err)
 	}
+
 	err = tObj.Save("rsm_fft")
 	if !assert.NoError(t, err, "failed to save test results") {
 		t.Error(err)

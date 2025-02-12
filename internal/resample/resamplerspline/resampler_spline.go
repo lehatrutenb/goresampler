@@ -18,7 +18,6 @@ type borderCond struct {
 
 type ResamplerSpline struct {
 	in      []float32
-	out     []float32
 	inRate  int
 	outRate int
 	bc      borderCond
@@ -27,11 +26,6 @@ type ResamplerSpline struct {
 func New(inRate, outRate int) ResamplerSpline {
 	return ResamplerSpline{inRate: inRate, outRate: outRate, bc: borderCond{0, 0, 0, 0, 2, 2}}
 }
-
-/*
-func (sw SplineWave) GetOutWave() []int16 {
-	return utils.AFloatToS16(sw.out)
-}*/
 
 type Spline struct {
 	ys   []float32 // f(x) in givens xs
@@ -129,50 +123,56 @@ func (sp Spline) _calcNewY(x float32) float32 {
 	return first + second
 }
 
-func (sp Spline) calcNewStep(newSt float32, amt int) []float32 {
+func (sp Spline) calcNewStep(newSt float64, amt int) []float32 {
 	newYs := make([]float32, amt)
-	var st float32 = sp.step
-	var st2, st3 float32 = st * st, st * st * st
+	var st float64 = float64(sp.step)
+	var st2, st3 float64 = st * st, st * st * st
 	for ind := 0; ind < amt; ind++ {
-		x := float32(ind) * newSt
+		x := float64(ind) * float64(newSt)
 
-		il := min(int32(len(sp.ys)-2), max(0, int32(math.Floor(float64(x/sp.step)))))
+		il := min(int32(len(sp.ys)-2), max(0, int32(math.Floor(float64(x/float64(sp.step))))))
 		ir := il + 1
-		l := sp.step * float32(il)
-		r := sp.step * float32(ir)
+		l := float64(sp.step) * float64(il)
+		r := float64(sp.step) * float64(ir)
 
 		ld := x - l
 		rd := x - r
 
-		first := sp.yds[il]*ld*rd*rd/st2 + sp.ys[il]*(2*ld*rd*rd/st3+rd*rd/st2)
-		second := sp.yds[ir]*ld*ld*rd/st2 + sp.ys[ir]*(-2*ld*ld*rd/st3+ld*ld/st2)
-		newYs[ind] = first + second
+		first := float64(sp.yds[il])*ld*rd*rd/st2 + float64(sp.ys[il])*(2*ld*rd*rd/st3+rd*rd/st2)
+		second := float64(sp.yds[ir])*ld*ld*rd/st2 + float64(sp.ys[ir])*(-2*ld*ld*rd/st3+ld*ld/st2)
+		newYs[ind] = float32(first + second)
 	}
+
 	return newYs
 }
 
-func rateToSplineStep(rate int) float32 {
-	return 1 / float32(rate)
+func rateToSplineStep(rate int) float64 {
+	return 1 / float64(rate)
 }
 
-func (sw *ResamplerSpline) resample(sp Spline) {
-	sw.out = sp.calcNewStep(rateToSplineStep(sw.outRate), len(sw.out))
+func (sw *ResamplerSpline) resample(sp Spline, out *[]float32) {
+	*out = sp.calcNewStep(rateToSplineStep(sw.outRate), len(*out))
 }
 
 // divided to speed up if want to convert to many rates - to build spline once
 
-func (sw *ResamplerSpline) CalcNeedSamplesPerOutAmt(outAmt int) int {
+func (sw ResamplerSpline) CalcNeedSamplesPerOutAmt(outAmt int) int {
 	return int(math.Ceil(float64(sw.inRate*outAmt) / float64(sw.outRate)))
 }
 
-func (sw *ResamplerSpline) CalcOutSamplesPerInAmt(inAmt int) int {
+func (sw ResamplerSpline) calcOutSamplesPerInAmt(inAmt int) int {
 	return int(math.Ceil(float64(sw.outRate*inAmt) / float64(sw.inRate)))
 }
 
-func (sw *ResamplerSpline) Resample(in, out []int16) error {
+func (rsm ResamplerSpline) CalcInOutSamplesPerOutAmt(outAmt int) (int, int) {
+	in := rsm.CalcNeedSamplesPerOutAmt(outAmt)
+	return in, rsm.calcOutSamplesPerInAmt(in)
+}
+
+func (sw ResamplerSpline) Resample(in, out []int16) error {
 	sw.in = utils.AS16ToFloat(in)
-	sw.out = make([]float32, len(out))
-	sw.resample(Spline{}.New(sw.in, rateToSplineStep(sw.inRate), sw.bc))
-	copy(out, utils.AFloatToS16(sw.out))
+	outF := make([]float32, len(out))
+	sw.resample(Spline{}.New(sw.in, float32(rateToSplineStep(sw.inRate)), sw.bc), &outF)
+	copy(out, utils.AFloatToS16(outF))
 	return nil
 }

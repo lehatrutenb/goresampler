@@ -1,22 +1,26 @@
 package resamplerfft
 
 import (
+	"errors"
 	"math"
 	"resampler/internal/utils"
 )
 
-type FFTResampler struct {
-	in      []float32
-	out     []float32
-	inRate  int
-	outRate int
+var ErrGotIncorrectArrSzs = errors.New("got unexpected in or out array sizes")
+
+type ResamplerFFT struct {
+	in       []float32
+	out      []float32
+	inRate   int
+	outRate  int
+	batchSzs []batchSzWithDiff
 }
 
-func (FFTResampler) New(in []int16, inRate int, outRate int) *FFTResampler {
-	return &FFTResampler{in: utils.AS16ToFloat(in), out: make([]float32, len(in)*outRate/inRate), inRate: inRate, outRate: outRate}
+func New(inRate int, outRate int) *ResamplerFFT {
+	return &ResamplerFFT{inRate: inRate, outRate: outRate, batchSzs: findBatchSzs(inRate, outRate)}
 }
 
-func (rsm FFTResampler) GetOutWave() []int16 {
+func (rsm ResamplerFFT) GetOutWave() []int16 {
 	return utils.AFloatToS16(rsm.out)
 }
 
@@ -228,12 +232,110 @@ func resample(re []float32, outArr []float32, inRate, outRate int, outLen int) {
 	}
 }
 
-func (rsm *FFTResampler) ResampleFFT() {
-	if rsm.inRate == 11025 && rsm.outRate == 8000 {
-		coefIn := 90317 // 22580
-		coefOut := len(rsm.out) / (len(rsm.in) / coefIn)
-		for i := 0; i*coefIn < len(rsm.in); i++ {
-			resample(rsm.in[i*coefIn:(i+1)*coefIn], rsm.out[i*coefOut:(i+1)*coefOut], rsm.inRate, rsm.outRate, coefOut)
+func calcDiff(sz int64, pow2, inRate, outRate int) float64 {
+	return math.Abs(float64(sz)*float64(outRate)/float64(inRate) - float64(pow2))
+}
+
+type batchSzWithDiff struct {
+	sz   int64
+	diff float64
+}
+
+func findBatchSzs(inRate, outRate int) []batchSzWithDiff {
+	bestSzs := make([]batchSzWithDiff, 30)
+	for pow2 := 4; pow2 < len(bestSzs); pow2++ {
+		l, r := int64(0), int64((1 << 35))
+		curPow := (1 << pow2)
+		for l+2 < r {
+			mid1 := l + (r-l)/3
+			mid2 := r - (r-l)/3
+			if calcDiff(mid1, curPow, inRate, outRate) <= calcDiff(mid2, curPow, inRate, outRate) {
+				r = mid2
+			} else {
+				l = mid1
+			}
+		}
+
+		minDiff := float64(1e18)
+		for i := l; i <= r; i++ {
+			cur := calcDiff(i, curPow, inRate, outRate)
+			if cur < minDiff {
+				minDiff = cur
+				bestSzs[pow2] = batchSzWithDiff{i, cur}
+			}
 		}
 	}
+	return bestSzs
+}
+
+func (rsm *ResamplerFFT) CalcNeedSamplesPerOutAmt(outAmt int) int {
+	lZeroInd := 0
+	for i := 0; i < len(rsm.batchSzs) && rsm.batchSzs[i].sz == 0; i++ {
+		lZeroInd = i
+	}
+
+	lZeroInd++
+	if outAmt%(1<<lZeroInd) != 0 {
+		outAmt += (1 << lZeroInd) - (outAmt % (1 << lZeroInd))
+	}
+
+	var inAmt int = 0
+	for i := len(rsm.batchSzs) - 1; i >= 0; i-- {
+		if rsm.batchSzs[i].sz == 0 {
+			break
+		}
+
+		for outAmt >= (1 << i) {
+			outAmt -= (1 << i)
+			inAmt += int(rsm.batchSzs[i].sz)
+		}
+	}
+	return inAmt
+}
+
+func (rsm *ResamplerFFT) calcOutSamplesPerInAmt(inAmt int) int {
+	var outAmt int = 0
+	for i := len(rsm.batchSzs) - 1; i >= 0; i-- {
+		cur := int(rsm.batchSzs[i].sz)
+		if cur == 0 {
+			break
+		}
+
+		for inAmt >= cur {
+			inAmt -= cur
+			outAmt += (1 << i)
+		}
+	}
+	return outAmt
+}
+
+func (rsm *ResamplerFFT) CalcInOutSamplesPerOutAmt(outAmt int) (int, int) {
+	in := rsm.CalcNeedSamplesPerOutAmt(outAmt)
+	return in, rsm.calcOutSamplesPerInAmt(in)
+}
+
+func (rsm *ResamplerFFT) Resample(in []int16, out []int16) error {
+	rsm.in = utils.AS16ToFloat(in)
+	rsm.out = make([]float32, len(out)) // TODO alloc every resample
+	inInd := 0                          // don't want to change rsm.in and rsm.out size not to trap on it later
+	outInd := 0
+	for i := len(rsm.batchSzs) - 1; i >= 0; i-- {
+		cur := int(rsm.batchSzs[i].sz)
+		if cur == 0 {
+			break
+		}
+
+		for len(rsm.in)-inInd >= cur {
+			resample(rsm.in[inInd:inInd+cur], rsm.out[outInd:outInd+(1<<i)], rsm.inRate, rsm.outRate, (1 << i))
+			inInd += cur
+			outInd += (1 << i)
+		}
+	}
+
+	copy(out, utils.AFloatToS16(rsm.out))
+
+	if inInd != len(in) || outInd != len(out) {
+		return ErrGotIncorrectArrSzs
+	}
+	return nil
 }

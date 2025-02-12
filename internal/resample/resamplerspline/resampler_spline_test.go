@@ -24,6 +24,7 @@ func (resamplerSpline) New(inRate int, outRate int) resamplerSpline {
 func (rsm resamplerSpline) Copy() testutils.TestResampler {
 	res := new(resamplerSpline)
 	*res = rsm.New(rsm.inRate, rsm.outRate)
+	res.resampled = make([]int16, len(rsm.resampled))
 	return res
 }
 
@@ -33,9 +34,15 @@ func (rsm resamplerSpline) String() string {
 
 func (rsm *resamplerSpline) Resample(inp []int16) error {
 	sw := resamplerspline.New(rsm.inRate, rsm.outRate)
-	rsm.resampled = make([]int16, sw.CalcOutSamplesPerInAmt(len(inp)))
 	sw.Resample(inp, rsm.resampled)
 	return nil
+}
+func (rsm *resamplerSpline) calcNeedSamplesPerOutAmt(outAmt int) int {
+	var inAmt int
+	sr := resamplerspline.New(rsm.inRate, rsm.outRate)
+	inAmt, outAmt = sr.CalcInOutSamplesPerOutAmt(outAmt)
+	rsm.resampled = make([]int16, outAmt)
+	return inAmt
 }
 
 func (rsm resamplerSpline) OutLen() int {
@@ -53,55 +60,256 @@ func (rsm resamplerSpline) Get(ind int) (int16, error) {
 	return rsm.resampled[ind], nil
 }
 
-func TestResampleSpline48To32(t *testing.T) {
+func (rsm resamplerSpline) UnresampledInAmt() int {
+	return 0
+}
+
+func TestResampleSpline11025To8_SinWave(t *testing.T) {
+	inRate := 11025
+	outRate := 8000
+	waveDurS := float64(30)
 	defer func() {
 		if r := recover(); r != nil {
 			t.Error(r)
 		}
 	}()
-
-	var tObj testutils.TestObj = testutils.TestObj{}.New(testutils.SinWave{}.New(0, 55, 48000, 32000), testutils.TestResampler(&resamplerSpline{inRate: 48000, outRate: 32000}), 10, t, nil)
+	rsm := resamplerSpline{}.New(inRate, outRate)
+	var tObj testutils.TestObj = testutils.TestObj{}.New(testutils.CutWave{}.New(testutils.SinWave{}.New(0, waveDurS, inRate, outRate), 0, rsm.calcNeedSamplesPerOutAmt((int(waveDurS)-10)*outRate)), &rsm, 1, t, testutils.TestOpts{}.NewDefault())
 	err := tObj.Run()
 	if !assert.NoError(t, err, "failed to run resampler") {
 		t.Error(err)
 	}
-
-	err = tObj.Save("rsm_spline")
+	err = tObj.Save("rsm_const")
 	if !assert.NoError(t, err, "failed to save test results") {
 		t.Error(err)
 	}
 }
 
-func TestResampleSpline11To8(t *testing.T) {
+func TestResampleSpline16To8_SinWave(t *testing.T) {
+	inRate := 16000
+	outRate := 8000
+	waveDurS := float64(30)
 	defer func() {
 		if r := recover(); r != nil {
 			t.Error(r)
 		}
 	}()
-	var tObj testutils.TestObj = testutils.TestObj{}.New(testutils.SinWave{}.New(0, 55, 11000, 8000), testutils.TestResampler(&resamplerSpline{inRate: 11000, outRate: 8000}), 10, t, nil)
+	rsm := resamplerSpline{}.New(inRate, outRate)
+	var tObj testutils.TestObj = testutils.TestObj{}.New(testutils.CutWave{}.New(testutils.SinWave{}.New(0, waveDurS, inRate, outRate), 0, rsm.calcNeedSamplesPerOutAmt((int(waveDurS)-10)*outRate)), &rsm, 1, t, testutils.TestOpts{}.NewDefault())
 	err := tObj.Run()
 	if !assert.NoError(t, err, "failed to run resampler") {
 		t.Error(err)
 	}
-	err = tObj.Save("rsm_spline")
+	err = tObj.Save("rsm_const")
 	if !assert.NoError(t, err, "failed to save test results") {
 		t.Error(err)
 	}
 }
 
-func TestResampleSplineRealWave0(t *testing.T) {
+func TestResampleSpline44100To8_SinWave(t *testing.T) {
+	inRate := 44100
+	outRate := 8000
+	waveDurS := float64(30)
 	defer func() {
 		if r := recover(); r != nil {
 			t.Error(r)
 		}
 	}()
-	outR := 8000
-	var tObj testutils.TestObj = testutils.TestObj{}.New(testutils.RealWave{}.New(0, 11025, &outR, nil), testutils.TestResampler(&resamplerSpline{inRate: 11025, outRate: 8000}), 10, t, testutils.TestOpts{}.NewDefault().WithCrSF(true))
+	rsm := resamplerSpline{}.New(inRate, outRate)
+	var tObj testutils.TestObj = testutils.TestObj{}.New(testutils.CutWave{}.New(testutils.SinWave{}.New(0, waveDurS, inRate, outRate), 0, rsm.calcNeedSamplesPerOutAmt((int(waveDurS)-10)*outRate)), &rsm, 1, t, testutils.TestOpts{}.NewDefault())
 	err := tObj.Run()
 	if !assert.NoError(t, err, "failed to run resampler") {
 		t.Error(err)
 	}
-	err = tObj.Save("rsm_spline")
+	err = tObj.Save("rsm_const")
+	if !assert.NoError(t, err, "failed to save test results") {
+		t.Error(err)
+	}
+}
+
+func TestResampleSpline48To8_SinWave(t *testing.T) {
+	inRate := 48000
+	outRate := 8000
+	waveDurS := float64(30)
+	defer func() {
+		if r := recover(); r != nil {
+			t.Error(r)
+		}
+	}()
+	rsm := resamplerSpline{}.New(inRate, outRate)
+	var tObj testutils.TestObj = testutils.TestObj{}.New(testutils.CutWave{}.New(testutils.SinWave{}.New(0, waveDurS, inRate, outRate), 0, rsm.calcNeedSamplesPerOutAmt((int(waveDurS)-10)*outRate)), &rsm, 1, t, testutils.TestOpts{}.NewDefault())
+	err := tObj.Run()
+	if !assert.NoError(t, err, "failed to run resampler") {
+		t.Error(err)
+	}
+	err = tObj.Save("rsm_const")
+	if !assert.NoError(t, err, "failed to save test results") {
+		t.Error(err)
+	}
+}
+
+func TestResampleSpline8To16_SinWave(t *testing.T) {
+	inRate := 8000
+	outRate := 16000
+	waveDurS := float64(30)
+	defer func() {
+		if r := recover(); r != nil {
+			t.Error(r)
+		}
+	}()
+	rsm := resamplerSpline{}.New(inRate, outRate)
+	var tObj testutils.TestObj = testutils.TestObj{}.New(testutils.CutWave{}.New(testutils.SinWave{}.New(0, waveDurS, inRate, outRate), 0, rsm.calcNeedSamplesPerOutAmt((int(waveDurS)-10)*outRate)), &rsm, 1, t, testutils.TestOpts{}.NewDefault())
+	err := tObj.Run()
+	if !assert.NoError(t, err, "failed to run resampler") {
+		t.Error(err)
+	}
+	err = tObj.Save("rsm_const")
+	if !assert.NoError(t, err, "failed to save test results") {
+		t.Error(err)
+	}
+}
+
+func TestResampleSpline11025To16_SinWave(t *testing.T) {
+	inRate := 11025
+	outRate := 16000
+	waveDurS := float64(30)
+	defer func() {
+		if r := recover(); r != nil {
+			t.Error(r)
+		}
+	}()
+	rsm := resamplerSpline{}.New(inRate, outRate)
+	var tObj testutils.TestObj = testutils.TestObj{}.New(testutils.CutWave{}.New(testutils.SinWave{}.New(0, waveDurS, inRate, outRate), 0, rsm.calcNeedSamplesPerOutAmt((int(waveDurS)-10)*outRate)), &rsm, 1, t, testutils.TestOpts{}.NewDefault())
+	err := tObj.Run()
+	if !assert.NoError(t, err, "failed to run resampler") {
+		t.Error(err)
+	}
+	err = tObj.Save("rsm_const")
+	if !assert.NoError(t, err, "failed to save test results") {
+		t.Error(err)
+	}
+}
+
+func TestResampleSpline4410To16_SinWave(t *testing.T) {
+	inRate := 44100
+	outRate := 16000
+	waveDurS := float64(30)
+	defer func() {
+		if r := recover(); r != nil {
+			t.Error(r)
+		}
+	}()
+	rsm := resamplerSpline{}.New(inRate, outRate)
+	var tObj testutils.TestObj = testutils.TestObj{}.New(testutils.CutWave{}.New(testutils.SinWave{}.New(0, waveDurS, inRate, outRate), 0, rsm.calcNeedSamplesPerOutAmt((int(waveDurS)-10)*outRate)), &rsm, 1, t, testutils.TestOpts{}.NewDefault())
+	err := tObj.Run()
+	if !assert.NoError(t, err, "failed to run resampler") {
+		t.Error(err)
+	}
+	err = tObj.Save("rsm_const")
+	if !assert.NoError(t, err, "failed to save test results") {
+		t.Error(err)
+	}
+}
+
+func TestResampleSpline48To16_SinWave(t *testing.T) {
+	inRate := 48000
+	outRate := 16000
+	waveDurS := float64(30)
+	defer func() {
+		if r := recover(); r != nil {
+			t.Error(r)
+		}
+	}()
+	rsm := resamplerSpline{}.New(inRate, outRate)
+	var tObj testutils.TestObj = testutils.TestObj{}.New(testutils.CutWave{}.New(testutils.SinWave{}.New(0, waveDurS, inRate, outRate), 0, rsm.calcNeedSamplesPerOutAmt((int(waveDurS)-10)*outRate)), &rsm, 1, t, testutils.TestOpts{}.NewDefault())
+	err := tObj.Run()
+	if !assert.NoError(t, err, "failed to run resampler") {
+		t.Error(err)
+	}
+	err = tObj.Save("rsm_const")
+	if !assert.NoError(t, err, "failed to save test results") {
+		t.Error(err)
+	}
+}
+
+func TestResampleSpline44100To16_RealWave(t *testing.T) {
+	inRate := 44100
+	outRate := 16000
+	waveDurS := float64(60)
+	defer func() {
+		if r := recover(); r != nil {
+			t.Error(r)
+		}
+	}()
+	rsm := resamplerSpline{}.New(inRate, outRate)
+	var tObj testutils.TestObj = testutils.TestObj{}.New(testutils.CutWave{}.New(testutils.RealWave{}.New(0, inRate, &outRate, nil), 0, rsm.calcNeedSamplesPerOutAmt((int(waveDurS)-10)*outRate)), &rsm, 1, t, testutils.TestOpts{}.NewDefault())
+	err := tObj.Run()
+	if !assert.NoError(t, err, "failed to run resampler") {
+		t.Error(err)
+	}
+	err = tObj.Save("rsm_const")
+	if !assert.NoError(t, err, "failed to save test results") {
+		t.Error(err)
+	}
+}
+
+func TestResampleSpline44100To8_RealWave(t *testing.T) {
+	inRate := 44100
+	outRate := 8000
+	waveDurS := float64(60)
+	defer func() {
+		if r := recover(); r != nil {
+			t.Error(r)
+		}
+	}()
+	rsm := resamplerSpline{}.New(inRate, outRate)
+	var tObj testutils.TestObj = testutils.TestObj{}.New(testutils.CutWave{}.New(testutils.RealWave{}.New(0, inRate, &outRate, nil), 0, rsm.calcNeedSamplesPerOutAmt((int(waveDurS)-10)*outRate)), &rsm, 1, t, testutils.TestOpts{}.NewDefault())
+	err := tObj.Run()
+	if !assert.NoError(t, err, "failed to run resampler") {
+		t.Error(err)
+	}
+	err = tObj.Save("rsm_const")
+	if !assert.NoError(t, err, "failed to save test results") {
+		t.Error(err)
+	}
+}
+
+func TestResampleSpline11025To16_RealWave(t *testing.T) {
+	inRate := 11025
+	outRate := 16000
+	waveDurS := float64(60)
+	defer func() {
+		if r := recover(); r != nil {
+			t.Error(r)
+		}
+	}()
+	rsm := resamplerSpline{}.New(inRate, outRate)
+	var tObj testutils.TestObj = testutils.TestObj{}.New(testutils.CutWave{}.New(testutils.RealWave{}.New(0, inRate, &outRate, nil), 0, rsm.calcNeedSamplesPerOutAmt((int(waveDurS)-10)*outRate)), &rsm, 1, t, testutils.TestOpts{}.NewDefault())
+	err := tObj.Run()
+	if !assert.NoError(t, err, "failed to run resampler") {
+		t.Error(err)
+	}
+	err = tObj.Save("rsm_const")
+	if !assert.NoError(t, err, "failed to save test results") {
+		t.Error(err)
+	}
+}
+func TestResampleSpline11025To8_RealWave(t *testing.T) {
+	inRate := 11025
+	outRate := 16000
+	waveDurS := float64(60)
+	defer func() {
+		if r := recover(); r != nil {
+			t.Error(r)
+		}
+	}()
+	rsm := resamplerSpline{}.New(inRate, outRate)
+	var tObj testutils.TestObj = testutils.TestObj{}.New(testutils.CutWave{}.New(testutils.RealWave{}.New(0, inRate, &outRate, nil), 0, rsm.calcNeedSamplesPerOutAmt((int(waveDurS)-10)*outRate)), &rsm, 1, t, testutils.TestOpts{}.NewDefault())
+	err := tObj.Run()
+	if !assert.NoError(t, err, "failed to run resampler") {
+		t.Error(err)
+	}
+	err = tObj.Save("rsm_const")
 	if !assert.NoError(t, err, "failed to save test results") {
 		t.Error(err)
 	}
