@@ -39,7 +39,7 @@ func (bmr Benchmarker) New(rsmT resamplerauto.ResamplerT, inRate, outRate int, b
 		b.FailNow()
 	}
 
-	rsm, err := resamplerauto.New(inRate, outRate, rsmT)
+	rsm, _, err := resamplerauto.New(inRate, outRate, rsmT, nil)
 	if err != nil {
 		b.Error(err)
 		b.FailNow()

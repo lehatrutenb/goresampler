@@ -20,22 +20,28 @@ type SinWave struct {
 	outResRate   int
 	inSampleAmt  int
 	outSampleAmt int
+	chAmt        int
 }
 
 func (SinWave) New(leftB, rightB float64, inResRate, outResRate int) TestWave {
 	inSampleAmt := int(math.Floor((rightB - leftB) * float64(inResRate))) // no math behind, but floor not have lager segment in theory
 	outSampleAmt := int(math.Floor((rightB - leftB) * float64(outResRate)))
-	return SinWave{leftB, rightB, inResRate, outResRate, inSampleAmt, outSampleAmt}
+	return SinWave{leftB, rightB, inResRate, outResRate, inSampleAmt, outSampleAmt, 1}
+}
+
+func (sw SinWave) WithChannelAmt(chAmt int) TestWave {
+	sw.chAmt = chAmt
+	return sw
 }
 
 func (SinWave) Seed(int) {}
 
 func (sw SinWave) InLen() int {
-	return sw.inSampleAmt
+	return sw.inSampleAmt * sw.chAmt
 }
 
 func (sw SinWave) OutLen() int {
-	return sw.outSampleAmt
+	return sw.outSampleAmt * sw.chAmt
 }
 
 func (sw SinWave) InRate() int {
@@ -50,11 +56,13 @@ func (SinWave) WithResampled() bool {
 	return true
 }
 
-func (SinWave) NumChannels() int {
-	return 1
+func (sw SinWave) NumChannels() int {
+	return sw.chAmt
 }
 
 func (sw SinWave) GetIn(ind int) (int16, error) {
+	ind /= sw.NumChannels()
+
 	if ind >= sw.InLen() {
 		return 0, errors.New("out of bounds")
 	}
@@ -64,6 +72,8 @@ func (sw SinWave) GetIn(ind int) (int16, error) {
 }
 
 func (sw SinWave) GetOut(ind int) (int16, error) {
+	ind /= sw.NumChannels()
+
 	if ind >= sw.OutLen() {
 		return 0, errors.New("out of bounds")
 	}

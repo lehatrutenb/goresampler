@@ -18,6 +18,7 @@ type ResamplerT int
 const ResamplerConstExpr ResamplerT = 1
 const ResamplerSpline ResamplerT = 2
 const ResamplerFFT ResamplerT = 3
+const ResamplerBestFit ResamplerT = 4
 
 func (rsmT ResamplerT) String() string {
 	switch rsmT {
@@ -27,6 +28,8 @@ func (rsmT ResamplerT) String() string {
 		return "Spline_resampler"
 	case ResamplerFFT:
 		return "FFT_resampler"
+	case ResamplerBestFit:
+		return "BestFit_resampler"
 	default:
 		return "Undefined"
 	}
@@ -40,16 +43,35 @@ type ResamplerAuto struct {
 }
 
 // yeah, it hurts when new return err , but don't want use another ways to create
-func New(inRate, outRate int, rsmT ResamplerT) (resampleri.Resampler, error) {
+/*
+try to find batch input amt to have less err (0..1) rate than given maxErrRateP
+if failed to find such batch to fit maxErrRate,  second arg is false, otherwise true (but even with false, resampler is fine to use)
+*/
+func New(inRate, outRate int, rsmT ResamplerT, maxErrRateP *float64) (resampleri.Resampler, bool, error) {
 	if inRate == outRate {
-		return nil, ErrUnexpResRate
+		return nil, false, ErrUnexpResRate
 	}
 
 	switch rsmT {
 	case ResamplerSpline:
-		return resamplerspline.New(inRate, outRate), nil
+		rsm, ok := resamplerspline.New(inRate, outRate, maxErrRateP)
+		return rsm, ok, nil
 	case ResamplerFFT:
-		return resamplerfft.New(inRate, outRate), nil
+		if inRate <= outRate {
+			return nil, false, ErrUnexpResRate
+		}
+		rsm, ok := resamplerfft.New(inRate, outRate, maxErrRateP)
+		return rsm, ok, nil
+	case ResamplerBestFit:
+		switch inRate {
+		case 11025, 44100:
+			rsm, ok := resamplerspline.New(inRate, outRate, maxErrRateP)
+			return rsm, ok, nil
+		default:
+			rsmT = ResamplerConstExpr
+		}
+	}
+	switch rsmT {
 	case ResamplerConstExpr:
 		var rsm resampleri.Resampler
 		switch outRate {
@@ -64,7 +86,7 @@ func New(inRate, outRate int, rsmT ResamplerT) (resampleri.Resampler, error) {
 			case 48000:
 				rsm = resamplerce.NewRsm48To8L()
 			default:
-				return nil, ErrUnexpResRate
+				return nil, false, ErrUnexpResRate
 			}
 		case 16000:
 			switch inRate {
@@ -77,13 +99,17 @@ func New(inRate, outRate int, rsmT ResamplerT) (resampleri.Resampler, error) {
 			case 48000:
 				rsm = resamplerce.NewRsm48To16L()
 			default:
-				return nil, ErrUnexpResRate
+				return nil, false, ErrUnexpResRate
 			}
 		default:
-			return nil, ErrUnexpResRate
+			return nil, false, ErrUnexpResRate
 		}
-		return ResamplerAuto{inRate, outRate, rsm}, nil
+		return ResamplerAuto{inRate, outRate, rsm}, true, nil
 	default:
-		return nil, ErrUnexpResRate
+		return nil, false, ErrUnexpResRate
 	}
+}
+
+func (rsm ResamplerAuto) Reset() {
+	rsm.Resampler.Reset()
 }

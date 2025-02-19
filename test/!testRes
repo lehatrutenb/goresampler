@@ -1,178 +1,250 @@
 ?   	resampler/cmd	[no test files]
 ?   	resampler/internal/resample/resampleri	[no test files]
+?   	resampler/internal/resampleutils	[no test files]
 ?   	resampler/internal/test_utils	[no test files]
 ?   	resampler/internal/utils	[no test files]
-2025/02/13 01:47:14 failed to get min samples amt for benchmark - use 60 sec
+2025/02/19 20:37:08 failed to get min samples amt for benchmark - use 60 sec
 testing: warning: no tests to run
 PASS
-ok  	resampler/internal/benchmark	18.562s [no tests to run]
-=== RUN   TestResampleAuto_SinWave
-2025/02/13 01:47:14 Testing Const_expression_resampler from 8000 to 16000
-2025/02/13 01:47:14 Testing Const_expression_resampler from 11000 to 8000
-2025/02/13 01:47:14 Testing Const_expression_resampler from 11000 to 16000
-2025/02/13 01:47:14 Testing Const_expression_resampler from 16000 to 8000
-2025/02/13 01:47:14 Testing Const_expression_resampler from 44000 to 8000
-2025/02/13 01:47:14 Testing Const_expression_resampler from 44000 to 16000
-2025/02/13 01:47:14 Testing Const_expression_resampler from 48000 to 8000
-2025/02/13 01:47:14 Testing Const_expression_resampler from 48000 to 16000
-2025/02/13 01:47:14 Testing Spline_resampler from 8000 to 16000
-2025/02/13 01:47:14 Testing Spline_resampler from 11025 to 8000
-    test.go:282: too large time difference: correct:9.070295 got:9.077052
-2025/02/13 01:47:14 Testing Spline_resampler from 11025 to 16000
-    test.go:282: too large time difference: correct:9.070295 got:9.077052
-2025/02/13 01:47:14 Testing Spline_resampler from 16000 to 8000
-2025/02/13 01:47:14 Testing Spline_resampler from 44100 to 8000
-2025/02/13 01:47:14 Testing Spline_resampler from 44100 to 16000
-2025/02/13 01:47:14 Testing Spline_resampler from 48000 to 8000
-2025/02/13 01:47:14 Testing Spline_resampler from 48000 to 16000
-2025/02/13 01:47:14 Testing FFT_resampler from 11025 to 8000
-    test.go:282: too large time difference: correct:9.070295 got:9.077143
-2025/02/13 01:47:14 Testing FFT_resampler from 16000 to 8000
-2025/02/13 01:47:14 Testing FFT_resampler from 44100 to 8000
-2025/02/13 01:47:14 Testing FFT_resampler from 44100 to 16000
-2025/02/13 01:47:15 Testing FFT_resampler from 48000 to 8000
-2025/02/13 01:47:15 Testing FFT_resampler from 48000 to 16000
---- FAIL: TestResampleAuto_SinWave (0.62s)
-=== RUN   TestResampleAuto_RealWave
-2025/02/13 01:47:32 Testing Const_expression_resampler from 8000 to 16000
-    test.go:282: too large time difference: correct:25.000000 got:24.980000
-2025/02/13 01:47:32 Testing Spline_resampler from 8000 to 16000
-    test.go:282: too large time difference: correct:25.000000 got:24.980000
-2025/02/13 01:47:32 Testing Const_expression_resampler from 11000 to 8000
-    test.go:282: too large time difference: correct:18.181818 got:18.150909
-2025/02/13 01:47:32 Testing Const_expression_resampler from 11000 to 16000
-    test.go:282: too large time difference: correct:18.181818 got:18.180909
-2025/02/13 01:47:32 Testing Spline_resampler from 11025 to 8000
-    test.go:282: too large time difference: correct:18.140590 got:18.137052
-2025/02/13 01:47:32 Testing FFT_resampler from 11025 to 8000
-    test.go:282: too large time difference: correct:18.140590 got:18.137143
-2025/02/13 01:47:32 Testing Spline_resampler from 11025 to 16000
-    test.go:282: too large time difference: correct:18.140590 got:18.137052
-2025/02/13 01:47:32 Testing Const_expression_resampler from 16000 to 8000
-    test.go:282: too large time difference: correct:12.500000 got:12.490000
-2025/02/13 01:47:32 Testing Spline_resampler from 16000 to 8000
-    test.go:282: too large time difference: correct:12.500000 got:12.490000
-2025/02/13 01:47:32 Testing FFT_resampler from 16000 to 8000
-    test.go:282: too large time difference: correct:12.500000 got:12.490000
-2025/02/13 01:47:32 Testing Const_expression_resampler from 44000 to 8000
-    test.go:282: too large time difference: correct:4.545455 got:4.492727
-2025/02/13 01:47:32 Testing Const_expression_resampler from 44000 to 16000
-    test.go:282: too large time difference: correct:4.545455 got:4.522727
-2025/02/13 01:47:32 Testing Spline_resampler from 44100 to 8000
-    test.go:282: too large time difference: correct:4.535147 got:4.487574
-2025/02/13 01:47:32 Testing FFT_resampler from 44100 to 8000
-    test.go:282: too large time difference: correct:4.535147 got:4.487574
-2025/02/13 01:47:32 Testing Spline_resampler from 44100 to 16000
-    test.go:282: too large time difference: correct:4.535147 got:4.517574
-2025/02/13 01:47:32 Testing FFT_resampler from 44100 to 16000
-    test.go:282: too large time difference: correct:4.535147 got:4.517574
-2025/02/13 01:47:32 Testing Const_expression_resampler from 48000 to 8000
-    test.go:282: too large time difference: correct:4.166667 got:4.123333
-2025/02/13 01:47:32 Testing Spline_resampler from 48000 to 8000
-    test.go:282: too large time difference: correct:4.166667 got:4.123333
-2025/02/13 01:47:32 Testing FFT_resampler from 48000 to 8000
-    test.go:282: too large time difference: correct:4.166667 got:4.123333
-2025/02/13 01:47:32 Testing Const_expression_resampler from 48000 to 16000
-    test.go:282: too large time difference: correct:4.166667 got:4.153333
-2025/02/13 01:47:32 Testing Spline_resampler from 48000 to 16000
-    test.go:282: too large time difference: correct:4.166667 got:4.153333
-2025/02/13 01:47:32 Testing FFT_resampler from 48000 to 16000
-    test.go:282: too large time difference: correct:4.166667 got:4.153333
---- FAIL: TestResampleAuto_RealWave (17.80s)
+ok  	resampler/internal/benchmark	20.848s [no tests to run]
+=== RUN   TestResampleBatch_SinWave
+2025/02/19 20:37:08 Testing Const_expression_resampler from 8000 to 16000
+2025/02/19 20:37:08 Testing Const_expression_resampler from 11000 to 8000
+2025/02/19 20:37:08 Testing Const_expression_resampler from 11000 to 16000
+2025/02/19 20:37:08 Testing Const_expression_resampler from 16000 to 8000
+2025/02/19 20:37:08 Testing Const_expression_resampler from 44000 to 8000
+2025/02/19 20:37:08 Testing Const_expression_resampler from 44000 to 16000
+2025/02/19 20:37:08 Testing Const_expression_resampler from 48000 to 8000
+2025/02/19 20:37:08 Testing Const_expression_resampler from 48000 to 16000
+2025/02/19 20:37:08 Testing Spline_resampler from 8000 to 16000
+2025/02/19 20:37:08 Testing Spline_resampler from 11025 to 8000
+2025/02/19 20:37:08 Testing Spline_resampler from 11025 to 16000
+2025/02/19 20:37:08 Testing Spline_resampler from 16000 to 8000
+2025/02/19 20:37:08 Testing Spline_resampler from 44100 to 8000
+2025/02/19 20:37:08 Testing Spline_resampler from 44100 to 16000
+2025/02/19 20:37:08 Testing Spline_resampler from 48000 to 8000
+2025/02/19 20:37:08 Testing Spline_resampler from 48000 to 16000
+2025/02/19 20:37:08 Testing FFT_resampler from 11025 to 8000
+2025/02/19 20:37:08 Testing FFT_resampler from 16000 to 8000
+2025/02/19 20:37:09 Testing FFT_resampler from 44100 to 8000
+2025/02/19 20:37:09 Testing FFT_resampler from 44100 to 16000
+2025/02/19 20:37:09 Testing FFT_resampler from 48000 to 8000
+2025/02/19 20:37:09 Testing FFT_resampler from 48000 to 16000
+--- PASS: TestResampleBatch_SinWave (1.14s)
+=== RUN   TestResampleBatch_SinWave2Ch
+2025/02/19 20:37:09 Testing Const_expression_resampler from 8000 to 16000
+2025/02/19 20:37:09 Testing Const_expression_resampler from 11000 to 8000
+2025/02/19 20:37:09 Testing Const_expression_resampler from 11000 to 16000
+2025/02/19 20:37:09 Testing Const_expression_resampler from 16000 to 8000
+2025/02/19 20:37:10 Testing Const_expression_resampler from 44000 to 8000
+2025/02/19 20:37:10 Testing Const_expression_resampler from 44000 to 16000
+2025/02/19 20:37:10 Testing Const_expression_resampler from 48000 to 8000
+2025/02/19 20:37:10 Testing Const_expression_resampler from 48000 to 16000
+2025/02/19 20:37:10 Testing Spline_resampler from 8000 to 16000
+2025/02/19 20:37:10 Testing Spline_resampler from 11025 to 8000
+2025/02/19 20:37:10 Testing Spline_resampler from 11025 to 16000
+2025/02/19 20:37:10 Testing Spline_resampler from 16000 to 8000
+2025/02/19 20:37:10 Testing Spline_resampler from 44100 to 8000
+2025/02/19 20:37:10 Testing Spline_resampler from 44100 to 16000
+2025/02/19 20:37:10 Testing Spline_resampler from 48000 to 8000
+2025/02/19 20:37:10 Testing Spline_resampler from 48000 to 16000
+2025/02/19 20:37:10 Testing FFT_resampler from 11025 to 8000
+2025/02/19 20:37:10 Testing FFT_resampler from 16000 to 8000
+2025/02/19 20:37:11 Testing FFT_resampler from 44100 to 8000
+2025/02/19 20:37:11 Testing FFT_resampler from 44100 to 16000
+2025/02/19 20:37:11 Testing FFT_resampler from 48000 to 8000
+2025/02/19 20:37:11 Testing FFT_resampler from 48000 to 16000
+--- PASS: TestResampleBatch_SinWave2Ch (2.17s)
+=== RUN   TestResampleBatchDiffAddGetTypes_SinWave
+--- PASS: TestResampleBatchDiffAddGetTypes_SinWave (1.18s)
+=== RUN   TestResampleBatchDiffAddAmt_SinWave
+--- PASS: TestResampleBatchDiffAddAmt_SinWave (43.26s)
+=== RUN   TestResampleBatch_RealWave
+2025/02/19 20:38:10 Testing Const_expression_resampler from 8000 to 16000
+    test.go:300: too large error too often: tObj.Tres.Te.SqProc20=0.842652
+2025/02/19 20:38:10 Testing Spline_resampler from 8000 to 16000
+    test.go:300: too large error too often: tObj.Tres.Te.SqProc20=0.523297
+2025/02/19 20:38:10 Testing Const_expression_resampler from 11000 to 8000
+    test.go:300: too large error too often: tObj.Tres.Te.SqProc20=0.902055
+2025/02/19 20:38:10 Testing Const_expression_resampler from 11000 to 16000
+    test.go:300: too large error too often: tObj.Tres.Te.SqProc20=0.883268
+2025/02/19 20:38:10 Testing Spline_resampler from 11025 to 8000
+    test.go:300: too large error too often: tObj.Tres.Te.SqProc20=0.422965
+2025/02/19 20:38:10 Testing FFT_resampler from 11025 to 8000
+    test.go:300: too large error too often: tObj.Tres.Te.SqProc20=0.535279
+2025/02/19 20:38:11 Testing Spline_resampler from 11025 to 16000
+    test.go:300: too large error too often: tObj.Tres.Te.SqProc20=0.454869
+2025/02/19 20:38:11 Testing Const_expression_resampler from 16000 to 8000
+    test.go:300: too large error too often: tObj.Tres.Te.SqProc20=0.791818
+2025/02/19 20:38:11 Testing Spline_resampler from 16000 to 8000
+    test.go:300: too large error too often: tObj.Tres.Te.SqProc20=0.416436
+2025/02/19 20:38:11 Testing FFT_resampler from 16000 to 8000
+2025/02/19 20:38:11 Testing Const_expression_resampler from 44000 to 8000
+    test.go:300: too large error too often: tObj.Tres.Te.SqProc20=0.818577
+2025/02/19 20:38:11 Testing Const_expression_resampler from 44000 to 16000
+    test.go:300: too large error too often: tObj.Tres.Te.SqProc20=0.796222
+2025/02/19 20:38:11 Testing Spline_resampler from 44100 to 8000
+    test.go:300: too large error too often: tObj.Tres.Te.SqProc20=0.372961
+2025/02/19 20:38:12 Testing FFT_resampler from 44100 to 8000
+2025/02/19 20:38:12 Testing Spline_resampler from 44100 to 16000
+2025/02/19 20:38:12 Testing FFT_resampler from 44100 to 16000
+2025/02/19 20:38:12 Testing Const_expression_resampler from 48000 to 8000
+    test.go:300: too large error too often: tObj.Tres.Te.SqProc20=0.804381
+2025/02/19 20:38:12 Testing Spline_resampler from 48000 to 8000
+    test.go:300: too large error too often: tObj.Tres.Te.SqProc20=0.388226
+2025/02/19 20:38:12 Testing FFT_resampler from 48000 to 8000
+2025/02/19 20:38:12 Testing Const_expression_resampler from 48000 to 16000
+    test.go:300: too large error too often: tObj.Tres.Te.SqProc20=0.784918
+2025/02/19 20:38:12 Testing Spline_resampler from 48000 to 16000
+2025/02/19 20:38:12 Testing FFT_resampler from 48000 to 16000
+--- FAIL: TestResampleBatch_RealWave (16.59s)
+=== RUN   TestResampleBatchSaveReports_RealWave
+2025/02/19 20:38:20 Testing Const_expression_resampler from 8000 to 16000
+    test.go:300: too large error too often: tObj.Tres.Te.SqProc20=0.842652
+2025/02/19 20:38:20 Testing Spline_resampler from 8000 to 16000
+    test.go:300: too large error too often: tObj.Tres.Te.SqProc20=0.523297
+2025/02/19 20:38:21 Testing Const_expression_resampler from 11000 to 8000
+    test.go:300: too large error too often: tObj.Tres.Te.SqProc20=0.902055
+2025/02/19 20:38:22 Testing Const_expression_resampler from 11000 to 16000
+    test.go:300: too large error too often: tObj.Tres.Te.SqProc20=0.883268
+2025/02/19 20:38:23 Testing Spline_resampler from 11025 to 8000
+    test.go:300: too large error too often: tObj.Tres.Te.SqProc20=0.422965
+2025/02/19 20:38:24 Testing FFT_resampler from 11025 to 8000
+    test.go:300: too large error too often: tObj.Tres.Te.SqProc20=0.535279
+2025/02/19 20:38:25 Testing Spline_resampler from 11025 to 16000
+    test.go:300: too large error too often: tObj.Tres.Te.SqProc20=0.454869
+2025/02/19 20:38:26 Testing Const_expression_resampler from 16000 to 8000
+    test.go:300: too large error too often: tObj.Tres.Te.SqProc20=0.791818
+2025/02/19 20:38:27 Testing Spline_resampler from 16000 to 8000
+    test.go:300: too large error too often: tObj.Tres.Te.SqProc20=0.416436
+2025/02/19 20:38:27 Testing FFT_resampler from 16000 to 8000
+2025/02/19 20:38:28 Testing Const_expression_resampler from 44000 to 8000
+    test.go:300: too large error too often: tObj.Tres.Te.SqProc20=0.818577
+2025/02/19 20:38:28 Testing Const_expression_resampler from 44000 to 16000
+    test.go:300: too large error too often: tObj.Tres.Te.SqProc20=0.796222
+2025/02/19 20:38:29 Testing Spline_resampler from 44100 to 8000
+    test.go:300: too large error too often: tObj.Tres.Te.SqProc20=0.372961
+2025/02/19 20:38:30 Testing FFT_resampler from 44100 to 8000
+2025/02/19 20:38:30 Testing Spline_resampler from 44100 to 16000
+2025/02/19 20:38:30 Testing FFT_resampler from 44100 to 16000
+2025/02/19 20:38:31 Testing Const_expression_resampler from 48000 to 8000
+    test.go:300: too large error too often: tObj.Tres.Te.SqProc20=0.804381
+2025/02/19 20:38:31 Testing Spline_resampler from 48000 to 8000
+    test.go:300: too large error too often: tObj.Tres.Te.SqProc20=0.388226
+2025/02/19 20:38:31 Testing FFT_resampler from 48000 to 8000
+2025/02/19 20:38:32 Testing Const_expression_resampler from 48000 to 16000
+    test.go:300: too large error too often: tObj.Tres.Te.SqProc20=0.784918
+2025/02/19 20:38:32 Testing Spline_resampler from 48000 to 16000
+2025/02/19 20:38:32 Testing FFT_resampler from 48000 to 16000
+--- FAIL: TestResampleBatchSaveReports_RealWave (20.76s)
 FAIL
-FAIL	resampler/internal/resample	18.494s
+FAIL	resampler/internal/resample	85.294s
 === RUN   TestResampleAuto_SinWave
-2025/02/13 01:47:14 Testing Const_expression_resampler from 8000 to 16000
-2025/02/13 01:47:14 Testing Const_expression_resampler from 11000 to 8000
-2025/02/13 01:47:14 Testing Const_expression_resampler from 11000 to 16000
-2025/02/13 01:47:14 Testing Const_expression_resampler from 16000 to 8000
-2025/02/13 01:47:14 Testing Const_expression_resampler from 44000 to 8000
-2025/02/13 01:47:14 Testing Const_expression_resampler from 44000 to 16000
-2025/02/13 01:47:14 Testing Const_expression_resampler from 48000 to 8000
-2025/02/13 01:47:14 Testing Const_expression_resampler from 48000 to 16000
-2025/02/13 01:47:14 Testing Spline_resampler from 8000 to 16000
-2025/02/13 01:47:14 Testing Spline_resampler from 11025 to 8000
-2025/02/13 01:47:14 Testing Spline_resampler from 11025 to 16000
-2025/02/13 01:47:14 Testing Spline_resampler from 16000 to 8000
-2025/02/13 01:47:14 Testing Spline_resampler from 44100 to 8000
-2025/02/13 01:47:15 Testing Spline_resampler from 44100 to 16000
-2025/02/13 01:47:15 Testing Spline_resampler from 48000 to 8000
-2025/02/13 01:47:15 Testing Spline_resampler from 48000 to 16000
-2025/02/13 01:47:15 Testing FFT_resampler from 11025 to 8000
-2025/02/13 01:47:15 Testing FFT_resampler from 16000 to 8000
-2025/02/13 01:47:15 Testing FFT_resampler from 44100 to 8000
-2025/02/13 01:47:16 Testing FFT_resampler from 44100 to 16000
-2025/02/13 01:47:17 Testing FFT_resampler from 48000 to 8000
-2025/02/13 01:47:19 Testing FFT_resampler from 48000 to 16000
---- PASS: TestResampleAuto_SinWave (5.52s)
+2025/02/19 20:37:08 Testing Const_expression_resampler from 8000 to 16000
+2025/02/19 20:37:08 Testing Const_expression_resampler from 11000 to 8000
+2025/02/19 20:37:08 Testing Const_expression_resampler from 11000 to 16000
+2025/02/19 20:37:08 Testing Const_expression_resampler from 16000 to 8000
+2025/02/19 20:37:09 Testing Const_expression_resampler from 44000 to 8000
+2025/02/19 20:37:09 Testing Const_expression_resampler from 44000 to 16000
+2025/02/19 20:37:10 Testing Const_expression_resampler from 48000 to 8000
+2025/02/19 20:37:10 Testing Const_expression_resampler from 48000 to 16000
+2025/02/19 20:37:11 Testing Spline_resampler from 8000 to 16000
+2025/02/19 20:37:11 Testing Spline_resampler from 11025 to 8000
+2025/02/19 20:37:11 Testing Spline_resampler from 11025 to 16000
+2025/02/19 20:37:12 Testing Spline_resampler from 16000 to 8000
+2025/02/19 20:37:12 Testing Spline_resampler from 44100 to 8000
+2025/02/19 20:37:13 Testing Spline_resampler from 44100 to 16000
+2025/02/19 20:37:13 Testing Spline_resampler from 48000 to 8000
+2025/02/19 20:37:14 Testing Spline_resampler from 48000 to 16000
+2025/02/19 20:37:14 Testing FFT_resampler from 11025 to 8000
+2025/02/19 20:37:16 Testing FFT_resampler from 16000 to 8000
+2025/02/19 20:37:17 Testing FFT_resampler from 44100 to 8000
+2025/02/19 20:37:24 Testing FFT_resampler from 44100 to 16000
+2025/02/19 20:37:30 Testing FFT_resampler from 48000 to 8000
+2025/02/19 20:37:33 Testing FFT_resampler from 48000 to 16000
+2025/02/19 20:37:35 Testing BestFit_resampler from 8000 to 16000
+2025/02/19 20:37:35 Testing BestFit_resampler from 11025 to 8000
+2025/02/19 20:37:35 Testing BestFit_resampler from 11025 to 16000
+2025/02/19 20:37:35 Testing BestFit_resampler from 16000 to 8000
+2025/02/19 20:37:35 Testing BestFit_resampler from 44100 to 8000
+2025/02/19 20:37:36 Testing BestFit_resampler from 44100 to 16000
+2025/02/19 20:37:36 Testing BestFit_resampler from 48000 to 8000
+2025/02/19 20:37:36 Testing BestFit_resampler from 48000 to 16000
+--- PASS: TestResampleAuto_SinWave (28.54s)
+=== RUN   TestResampleAutoDiffErrsNotFall_SinWave
+--- PASS: TestResampleAutoDiffErrsNotFall_SinWave (31.73s)
 PASS
-ok  	resampler/internal/resample/resamplerauto	5.525s
+ok  	resampler/internal/resample/resamplerauto	60.422s
 === RUN   TestResample11To8L_SinWave
---- PASS: TestResample11To8L_SinWave (0.09s)
+--- PASS: TestResample11To8L_SinWave (0.08s)
 === RUN   TestResample16To8L_SinWave
 --- PASS: TestResample16To8L_SinWave (0.08s)
 === RUN   TestResample44000To8L_SinWave
---- PASS: TestResample44000To8L_SinWave (0.16s)
+--- PASS: TestResample44000To8L_SinWave (0.31s)
 === RUN   TestResample48To8L_SinWave
---- PASS: TestResample48To8L_SinWave (0.15s)
+--- PASS: TestResample48To8L_SinWave (0.21s)
 === RUN   TestResample8To16L_SinWave
---- PASS: TestResample8To16L_SinWave (0.06s)
+--- PASS: TestResample8To16L_SinWave (0.11s)
 === RUN   TestResample11To16L_SinWave
---- PASS: TestResample11To16L_SinWave (0.10s)
+--- PASS: TestResample11To16L_SinWave (0.28s)
 === RUN   TestResample44000To16L_SinWave
---- PASS: TestResample44000To16L_SinWave (0.27s)
+--- PASS: TestResample44000To16L_SinWave (0.36s)
 === RUN   TestResample48To16L_SinWave
---- PASS: TestResample48To16L_SinWave (0.17s)
+--- PASS: TestResample48To16L_SinWave (0.35s)
 PASS
-ok  	resampler/internal/resample/resamplerce	1.070s
+ok  	resampler/internal/resample/resamplerce	1.808s
+=== RUN   TestResampleFFTDiffErrsNotFall_SinWave
+--- PASS: TestResampleFFTDiffErrsNotFall_SinWave (8.65s)
 === RUN   TestResampleFFT11025To8_SinWave
-    test.go:282: too large time difference: correct:20.000091 got:20.000000
---- FAIL: TestResampleFFT11025To8_SinWave (0.38s)
+--- PASS: TestResampleFFT11025To8_SinWave (1.13s)
 === RUN   TestResampleFFT16To8_SinWave
---- PASS: TestResampleFFT16To8_SinWave (0.42s)
+--- PASS: TestResampleFFT16To8_SinWave (0.50s)
 === RUN   TestResampleFFT44100To8_SinWave
-    test.go:282: too large time difference: correct:19.999977 got:20.000000
---- FAIL: TestResampleFFT44100To8_SinWave (1.85s)
+--- PASS: TestResampleFFT44100To8_SinWave (6.26s)
 === RUN   TestResampleFFT48To8_SinWave
---- PASS: TestResampleFFT48To8_SinWave (2.52s)
+--- PASS: TestResampleFFT48To8_SinWave (2.16s)
 === RUN   TestResampleFFT44100To16_SinWave
-    test.go:282: too large time difference: correct:19.999977 got:20.000000
---- FAIL: TestResampleFFT44100To16_SinWave (3.16s)
+--- PASS: TestResampleFFT44100To16_SinWave (4.81s)
 === RUN   TestResampleFFT48To16_SinWave
---- PASS: TestResampleFFT48To16_SinWave (2.86s)
+--- PASS: TestResampleFFT48To16_SinWave (1.63s)
 === RUN   TestResampleFFT11025To8
---- PASS: TestResampleFFT11025To8 (5.72s)
+    test.go:300: too large error too often: tObj.Tres.Te.SqProc20=0.741053
+--- FAIL: TestResampleFFT11025To8 (3.20s)
 === RUN   TestResampleFFT44100To16
---- PASS: TestResampleFFT44100To16 (12.83s)
+--- PASS: TestResampleFFT44100To16 (30.86s)
 FAIL
-FAIL	resampler/internal/resample/resamplerfft	29.793s
+FAIL	resampler/internal/resample/resamplerfft	59.292s
+=== RUN   TestFindInRatePerErr
+--- PASS: TestFindInRatePerErr (0.00s)
+=== RUN   TestResampleAutoDiffErrsNotFall_SinWave
+--- PASS: TestResampleAutoDiffErrsNotFall_SinWave (1.82s)
 === RUN   TestResampleSpline11025To8_SinWave
---- PASS: TestResampleSpline11025To8_SinWave (0.08s)
+--- PASS: TestResampleSpline11025To8_SinWave (0.23s)
 === RUN   TestResampleSpline16To8_SinWave
---- PASS: TestResampleSpline16To8_SinWave (0.06s)
+--- PASS: TestResampleSpline16To8_SinWave (0.19s)
 === RUN   TestResampleSpline44100To8_SinWave
---- PASS: TestResampleSpline44100To8_SinWave (0.16s)
+--- PASS: TestResampleSpline44100To8_SinWave (0.33s)
 === RUN   TestResampleSpline48To8_SinWave
---- PASS: TestResampleSpline48To8_SinWave (0.12s)
+--- PASS: TestResampleSpline48To8_SinWave (0.38s)
 === RUN   TestResampleSpline8To16_SinWave
---- PASS: TestResampleSpline8To16_SinWave (0.07s)
+--- PASS: TestResampleSpline8To16_SinWave (0.17s)
 === RUN   TestResampleSpline11025To16_SinWave
---- PASS: TestResampleSpline11025To16_SinWave (0.10s)
+--- PASS: TestResampleSpline11025To16_SinWave (0.21s)
 === RUN   TestResampleSpline4410To16_SinWave
---- PASS: TestResampleSpline4410To16_SinWave (0.18s)
+--- PASS: TestResampleSpline4410To16_SinWave (0.55s)
 === RUN   TestResampleSpline48To16_SinWave
---- PASS: TestResampleSpline48To16_SinWave (0.20s)
+--- PASS: TestResampleSpline48To16_SinWave (0.52s)
 === RUN   TestResampleSpline44100To16_RealWave
---- PASS: TestResampleSpline44100To16_RealWave (14.26s)
+--- PASS: TestResampleSpline44100To16_RealWave (15.19s)
 === RUN   TestResampleSpline44100To8_RealWave
-    test.go:273: too large error too often: tObj.Tres.Te.SqProc20=0.431418
---- FAIL: TestResampleSpline44100To8_RealWave (5.34s)
+    test.go:300: too large error too often: tObj.Tres.Te.SqProc20=0.431418
+--- FAIL: TestResampleSpline44100To8_RealWave (6.26s)
 === RUN   TestResampleSpline11025To16_RealWave
-    test.go:273: too large error too often: tObj.Tres.Te.SqProc20=0.458190
---- FAIL: TestResampleSpline11025To16_RealWave (2.09s)
+    test.go:300: too large error too often: tObj.Tres.Te.SqProc20=0.458190
+--- FAIL: TestResampleSpline11025To16_RealWave (3.78s)
 === RUN   TestResampleSpline11025To8_RealWave
-    test.go:273: too large error too often: tObj.Tres.Te.SqProc20=0.458190
---- FAIL: TestResampleSpline11025To8_RealWave (2.69s)
+    test.go:300: too large error too often: tObj.Tres.Te.SqProc20=0.458190
+--- FAIL: TestResampleSpline11025To8_RealWave (5.47s)
 FAIL
-FAIL	resampler/internal/resample/resamplerspline	25.368s
+FAIL	resampler/internal/resample/resamplerspline	35.153s
 FAIL

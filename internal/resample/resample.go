@@ -54,7 +54,9 @@ func (rsm *ResamplerBatch) resampleMore(minRsmAmt int) error {
 func (rsm *ResamplerBatch) GetLargeBatch(out *[]int16) error {
 	bLen := len(*out)
 	if bLen > len(rsm.out) {
-		rsm.resampleMore(bLen - len(rsm.out))
+		if err := rsm.resampleMore(bLen - len(rsm.out)); err != nil {
+			return err
+		}
 	}
 	*out = rsm.out[:bLen]
 	rsm.out = rsm.out[bLen:]
@@ -68,11 +70,12 @@ func (rsm *ResamplerBatch) GetBatch(out []int16) error {
 			return err
 		}
 	}
+
 	copy(out, rsm.out)
 	rsm.out = rsm.out[bLen:]
 	return nil
 }
 
-func (rsm ResamplerBatch) UnresampledInAmt() int {
-	return len(rsm.in)
+func (rsm ResamplerBatch) UnresampledUngetInAmt() (int, int) {
+	return len(rsm.in), len(rsm.out)
 }

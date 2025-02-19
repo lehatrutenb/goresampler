@@ -69,7 +69,7 @@ func LoadAllRealWaves(waveInd int, pathToBaseWaves *string, samplesAmt *int, sam
 					continue
 				}
 				gr.Add(1)
-				rsm, err := resamplerauto.New(inRate, outRate, rsmT)
+				rsm, _, err := resamplerauto.New(inRate, outRate, rsmT, nil)
 				if err != nil {
 					panic(err)
 				}

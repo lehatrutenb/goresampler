@@ -20,7 +20,7 @@ type ResamplerLTest struct {
 }
 
 func (ResamplerLTest) New(inRate, outRate int) *ResamplerLTest {
-	rsm, err := resamplerauto.New(inRate, outRate, resamplerauto.ResamplerConstExpr)
+	rsm, _, err := resamplerauto.New(inRate, outRate, resamplerauto.ResamplerConstExpr, nil)
 	if err != nil {
 		panic(err)
 	}
@@ -58,8 +58,8 @@ func (rsm ResamplerLTest) Get(ind int) (int16, error) {
 	}
 	return rsm.resampled[ind], nil
 }
-func (rsm ResamplerLTest) UnresampledInAmt() int {
-	return 0
+func (rsm ResamplerLTest) UnresampledUngetInAmt() (int, int) {
+	return 0, 0
 }
 
 func TestResample11To8L_SinWave(t *testing.T) {

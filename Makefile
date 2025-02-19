@@ -6,7 +6,7 @@ gitCommit:
 	@read -p "Enter commit comments:" commit_comments ; \
         git commit -m "$$commit_comments" ; \
 		export last_commit_hash=$(shell git log --format="%H" -n 1) ; \
-		cp test go_resampler_archive/$$last_commit_hash ; \
+		cp -r test go_resampler_archive/$$last_commit_hash ; \
 		rm -rf prev_test ; \
 		mv test prev_test ; \
 	-mkdir test
@@ -15,7 +15,6 @@ gitCommit:
 	-mkdir test/reports_large
 	-mkdir test/audio
 	-mkdir test/readme_audio
-
 
 	-mkdir test/reports/rsm_const
 	-mkdir test/reports/rsm_spline
@@ -41,7 +40,7 @@ gitCommitNotRmTestReports:
 
 
 runPlotting:
-	python3 ./internal/test_utils/plots.py  -pib=./test/reports_large -pob=./test/plots -p1="rsm_spline" -p2="rsm_const" -p3="rsm_fft" --workers-amt=20 # it's written here cause running from go code looks dirty
+	python3 ./internal/test_utils/plots.py  -pib=./test/reports_large -pob=./test/plots -p1="rsm_spline" -p2="rsm_const" -p3="rsm_fft" -p4="rsm_batch" -p5="rsm_auto" --workers-amt=20 # it's written here cause running from go code looks dirty
 
 
 #if want to process later better to use -json, but I don't think I want to
@@ -71,18 +70,26 @@ clearTestDir:
 	mkdir test/reports/rsm_const
 	mkdir test/reports/rsm_spline
 	mkdir test/reports/rsm_fft
+	mkdir test/reports/rsm_batch
+	mkdir test/reports/rsm_auto
 
 	mkdir test/reports_large/rsm_const
 	mkdir test/reports_large/rsm_spline
 	mkdir test/reports_large/rsm_fft
+	mkdir test/reports_large/rsm_batch
+	mkdir test/reports_large/rsm_auto
 
 	mkdir test/plots/rsm_const
 	mkdir test/plots/rsm_spline
 	mkdir test/plots/rsm_fft
+	mkdir test/plots/rsm_batch
+	mkdir test/plots/rsm_auto
 
 	mkdir test/audio/rsm_const
 	mkdir test/audio/rsm_spline
 	mkdir test/audio/rsm_fft
+	mkdir test/audio/rsm_batch
+	mkdir test/audio/rsm_auto
 
 # CALC ONLY 1 CHANNEL IN RESAMPLING TIME
 runBenchmark:

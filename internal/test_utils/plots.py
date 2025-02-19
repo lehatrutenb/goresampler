@@ -125,7 +125,9 @@ parser.add_argument("-pob", "--plot-output-base")
 parser.add_argument("-p1", "--plot-path1")
 parser.add_argument("-p2", "--plot-path2")
 parser.add_argument("-p3", "--plot-path3")
-plot_pathes = [parser.parse_args().plot_path1, parser.parse_args().plot_path2, parser.parse_args().plot_path3]
+parser.add_argument("-p4", "--plot-path4")
+parser.add_argument("-p5", "--plot-path5")
+plot_pathes = [parser.parse_args().plot_path1, parser.parse_args().plot_path2, parser.parse_args().plot_path3, parser.parse_args().plot_path4, parser.parse_args().plot_path5]
 inBasePath = parser.parse_args().plot_input_base
 outBasePath = parser.parse_args().plot_output_base
 

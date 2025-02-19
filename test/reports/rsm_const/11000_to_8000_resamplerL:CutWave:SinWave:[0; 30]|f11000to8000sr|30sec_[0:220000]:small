@@ -1,1 +1,1 @@
-{"Te":{"Proc of xs with error higher 20%":0.0465375,"Proc of xs with error higher 10%":0.09266875,"Proc of xs with error higher 5%":0.18161875,"Proc of xs with error higher 1%":0.61945,"ErrSqed (x-corr)^2":18503091234,"ErrSqed ((x-corr)^2)/output_samples_amt":115644.3202125},"SDurMS":-1}
+{"Te":{"Proc of xs with error higher 20%":0.0465375,"Proc of xs with error higher 10%":0.09266875,"Proc of xs with error higher 5%":0.18161875,"Proc of xs with error higher 1%":0.61945,"ErrSqed (x-corr)^2":18503091234,"ErrSqed ((x-corr)^2)/output_samples_amt":115644.3202125},"SDurMS":9}
