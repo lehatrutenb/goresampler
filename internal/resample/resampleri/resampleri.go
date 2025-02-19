@@ -4,6 +4,7 @@ type Resampler interface {
 	Resample([]int16, []int16) error
 	CalcInOutSamplesPerOutAmt(int) (int, int) // in, out
 	CalcNeedSamplesPerOutAmt(int) int
+	Reset()
 	// CalcOutSamplesPerInAmt(int) int // not want to make that func public cause some rasmplers (fft) want to get only correct inAmt - that returned CalcNeedSamplesPerOutAmt
 }
 

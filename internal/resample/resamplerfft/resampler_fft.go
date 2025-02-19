@@ -3,10 +3,13 @@ package resamplerfft
 import (
 	"errors"
 	"math"
+	"resampler/internal/resampleutils"
 	"resampler/internal/utils"
 )
 
 var ErrGotIncorrectArrSzs = errors.New("got unexpected in or out array sizes")
+
+const baseTimeErrRate = 1e-6
 
 type ResamplerFFT struct {
 	in       []float32
@@ -16,8 +19,21 @@ type ResamplerFFT struct {
 	batchSzs []batchSzWithDiff
 }
 
-func New(inRate int, outRate int) *ResamplerFFT {
-	return &ResamplerFFT{inRate: inRate, outRate: outRate, batchSzs: findBatchSzs(inRate, outRate)}
+/*
+if you use New with last maxErrRateP=nil - ignore ok value if err doesn't matter (but it can't be large)
+return configured resampler
+
+try to find batch input amt to have less err (0..1) rate than given maxErrRateP
+if failed to find such batch to fit maxErrRate,  second arg is false, otherwise true (but even with false, resampler is fine to use)
+*/
+
+func New(inRate, outRate int, maxErrRateP *float64) (*ResamplerFFT, bool) {
+	var maxErrRate = baseTimeErrRate
+	if maxErrRateP != nil {
+		maxErrRate = *maxErrRateP
+	}
+	bSzs, ok := findBatchSzs(inRate, outRate, maxErrRate)
+	return &ResamplerFFT{inRate: inRate, outRate: outRate, batchSzs: bSzs}, ok
 }
 
 func (rsm ResamplerFFT) GetOutWave() []int16 {
@@ -241,9 +257,10 @@ type batchSzWithDiff struct {
 	diff float64
 }
 
-func findBatchSzs(inRate, outRate int) []batchSzWithDiff {
+func findBatchSzs(inRate, outRate int, maxErrRate float64) ([]batchSzWithDiff, bool) {
+	foundFitErrSz := false
 	bestSzs := make([]batchSzWithDiff, 30)
-	for pow2 := 4; pow2 < len(bestSzs); pow2++ {
+	for pow2 := 4; pow2 < len(bestSzs); pow2++ { // 4 is choosen just not to divide weave into too small peices (2^3)
 		l, r := int64(0), int64((1 << 35))
 		curPow := (1 << pow2)
 		for l+2 < r {
@@ -258,14 +275,25 @@ func findBatchSzs(inRate, outRate int) []batchSzWithDiff {
 
 		minDiff := float64(1e18)
 		for i := l; i <= r; i++ {
-			cur := calcDiff(i, curPow, inRate, outRate)
-			if cur < minDiff {
-				minDiff = cur
-				bestSzs[pow2] = batchSzWithDiff{i, cur}
+			curD := calcDiff(i, curPow, inRate, outRate)
+
+			minV, maxV := resampleutils.GetMinMaxSmplsAmt(inRate, outRate, i) // check that err in time with such input is fit err
+			// pow2+1 != len(bestSzs) not to rm all sizes
+			if !resampleutils.CheckErrMinMax(minV, maxV, maxErrRate/2.1) { // why / 2.1? - in batching error ~ multiplied by 2 && cause float / 2 is not perfect chose 2.1
+				if pow2+1 != len(bestSzs) {
+					continue
+				}
+			} else {
+				foundFitErrSz = true
+			}
+
+			if curD < minDiff {
+				minDiff = curD
+				bestSzs[pow2] = batchSzWithDiff{i, curD}
 			}
 		}
 	}
-	return bestSzs
+	return bestSzs, foundFitErrSz
 }
 
 func (rsm *ResamplerFFT) CalcNeedSamplesPerOutAmt(outAmt int) int {
@@ -282,7 +310,7 @@ func (rsm *ResamplerFFT) CalcNeedSamplesPerOutAmt(outAmt int) int {
 	var inAmt int = 0
 	for i := len(rsm.batchSzs) - 1; i >= 0; i-- {
 		if rsm.batchSzs[i].sz == 0 {
-			break
+			continue
 		}
 
 		for outAmt >= (1 << i) {
@@ -298,7 +326,7 @@ func (rsm *ResamplerFFT) calcOutSamplesPerInAmt(inAmt int) int {
 	for i := len(rsm.batchSzs) - 1; i >= 0; i-- {
 		cur := int(rsm.batchSzs[i].sz)
 		if cur == 0 {
-			break
+			continue
 		}
 
 		for inAmt >= cur {
@@ -322,7 +350,7 @@ func (rsm *ResamplerFFT) Resample(in []int16, out []int16) error {
 	for i := len(rsm.batchSzs) - 1; i >= 0; i-- {
 		cur := int(rsm.batchSzs[i].sz)
 		if cur == 0 {
-			break
+			continue
 		}
 
 		for len(rsm.in)-inInd >= cur {
@@ -338,4 +366,8 @@ func (rsm *ResamplerFFT) Resample(in []int16, out []int16) error {
 		return ErrGotIncorrectArrSzs
 	}
 	return nil
+}
+
+func (rsm ResamplerFFT) Reset() { // TODO logically should be empty but not tested
+	panic("UNIMPLEMENTED")
 }

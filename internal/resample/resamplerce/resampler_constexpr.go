@@ -77,10 +77,13 @@ func Resample48To32L(in []int32, out []int32, k int32) {
 }
 
 type Resampler16To8L struct {
+	st1 []int32
 }
 
 func NewRsm16To8L() Resampler16To8L {
-	return Resampler16To8L{}
+	rsm := Resampler16To8L{}
+	rsm.initStateResample16To8L()
+	return rsm
 }
 
 func (Resampler16To8L) CalcNeedSamplesPerOutAmt(outAmt int) int {
@@ -96,21 +99,18 @@ func (rsm Resampler16To8L) CalcInOutSamplesPerOutAmt(outAmt int) (int, int) {
 	return in, rsm.calcOutSamplesPerInAmt(in)
 }
 
-func initStateResample16To8L(st1 *[]int32) {
-	*st1 = make([]int32, 8)
+func (rsm *Resampler16To8L) initStateResample16To8L() {
+	rsm.st1 = make([]int32, 8)
 }
 
-func resetResample16To8L(st1 []int32) {
-	for i := 0; i < len(st1); i++ {
-		st1[i] = 0
+func (rsm Resampler16To8L) Reset() {
+	for i := 0; i < len(rsm.st1); i++ {
+		rsm.st1[i] = 0
 	}
 }
 
-func (Resampler16To8L) Resample(in []int16, out []int16) error {
-	var st1 []int32
-	initStateResample16To8L(&st1)
-
-	DownsampleBy2L(in, len(in), out, st1)
+func (rsm Resampler16To8L) Resample(in []int16, out []int16) error {
+	DownsampleBy2L(in, len(in), out, rsm.st1)
 
 	return nil
 }
@@ -172,10 +172,13 @@ func DownsampleBy2L(in []int16, inLen int, out []int16, fSt []int32) {
 }
 
 type Resampler8To16L struct {
+	st1 []int32
 }
 
 func NewRsm8To16L() Resampler8To16L {
-	return Resampler8To16L{}
+	rsm := Resampler8To16L{}
+	rsm.initStateResample8To16L()
+	return rsm
 }
 
 func (Resampler8To16L) CalcNeedSamplesPerOutAmt(outAmt int) int {
@@ -191,21 +194,18 @@ func (rsm Resampler8To16L) CalcInOutSamplesPerOutAmt(outAmt int) (int, int) {
 	return in, rsm.calcOutSamplesPerInAmt(in)
 }
 
-func initStateResample8To16L(st1 *[]int32) {
-	*st1 = make([]int32, 8)
+func (rsm *Resampler8To16L) initStateResample8To16L() {
+	rsm.st1 = make([]int32, 8)
 }
 
-func resetResample8To16L(st1 []int32) {
-	for i := 0; i < len(st1); i++ {
-		st1[i] = 0
+func (rsm Resampler8To16L) Reset() {
+	for i := 0; i < len(rsm.st1); i++ {
+		rsm.st1[i] = 0
 	}
 }
 
-func (Resampler8To16L) Resample(in []int16, out []int16) error {
-	var st1 []int32
-	initStateResample8To16L(&st1)
-
-	UpsampleBy2L(in, len(in), out, st1)
+func (rsm Resampler8To16L) Resample(in []int16, out []int16) error {
+	UpsampleBy2L(in, len(in), out, rsm.st1)
 	return nil
 }
 
@@ -803,30 +803,39 @@ func Resample22To8L(in []int16, out []int16, state State22To8, tmpmem []int32) {
 }
 
 type Resampler48To8L struct {
+	st1    state48To16
+	st2    []int32
+	tmpMem []int32
+	tmp    []int16
 }
 
 func NewRsm48To8L() Resampler48To8L {
-	return Resampler48To8L{}
+	rsm := Resampler48To8L{}
+	rsm.initStateResample48To8L()
+	return rsm
 }
 
-func initStateResample48To8L(st1 *state48To16, st2 *[]int32, tmpMem *[]int32, tmp *[]int16, inLen int) {
-	st1.S_48_48 = make([]int32, 16)
-	st1.S_48_32 = make([]int32, 8)
-	st1.S_32_16 = make([]int32, 8)
-	*st2 = make([]int32, 8)
-
-	*tmpMem = make([]int32, 496)
-	*tmp = make([]int16, inLen/3)
+func (rsm *Resampler48To8L) initStateResample48To8L() {
+	rsm.st1.S_48_48 = make([]int32, 16)
+	rsm.st1.S_48_32 = make([]int32, 8)
+	rsm.st1.S_32_16 = make([]int32, 8)
+	rsm.st2 = make([]int32, 8)
 }
 
-func resetResample48To8L(st1 state48To16, st2 []int32) {
+func (rsm Resampler48To8L) Reset() {
 	for i := 0; i < 8; i++ {
-		st1.S_48_32[i] = 0
-		st1.S_32_16[i] = 0
-		st2[i] = 0
+		rsm.st1.S_48_32[i] = 0
+		rsm.st1.S_32_16[i] = 0
+		rsm.st2[i] = 0
 	}
 	for i := 0; i < 16; i++ {
-		st1.S_48_48[i] = 0
+		rsm.st1.S_48_48[i] = 0
+	}
+	for i := 0; i < 496; i++ {
+		rsm.tmpMem[i] = 0
+	}
+	for i := 0; i < len(rsm.tmp); i++ {
+		rsm.tmp[i] = 0
 	}
 }
 
@@ -844,45 +853,49 @@ func (rsm Resampler48To8L) CalcInOutSamplesPerOutAmt(outAmt int) (int, int) {
 	return in, rsm.calcOutSamplesPerInAmt(in)
 }
 
-func (Resampler48To8L) Resample(in []int16, out []int16) error {
+func (rsm Resampler48To8L) Resample(in []int16, out []int16) error {
 	if len(in)%480 != 0 {
 		return ErrIncorrectInLen
 	}
 
-	var st1 state48To16
-	var st2, tmpMem []int32
-	var tmp []int16
-	initStateResample48To8L(&st1, &st2, &tmpMem, &tmp, len(in))
+	rsm.tmpMem = make([]int32, 496)
+	rsm.tmp = make([]int16, len(in)/3)
 	for i := 0; i < len(in); i += 480 {
-		resample48To16L(in[i:], tmp[i/3:], st1, tmpMem)
+		resample48To16L(in[i:], rsm.tmp[i/3:], rsm.st1, rsm.tmpMem)
 	}
 
-	DownsampleBy2L(tmp, len(in)/3, out, st2)
+	DownsampleBy2L(rsm.tmp, len(in)/3, out, rsm.st2)
 
 	return nil
 }
 
 type Resampler48To16L struct {
+	st1    state48To16
+	tmpMem []int32
 }
 
 func NewRsm48To16L() Resampler48To16L {
-	return Resampler48To16L{}
+	rsm := Resampler48To16L{}
+	rsm.initStateResample48To16L()
+	return rsm
 }
 
-func initStateResample48To16L(st1 *state48To16, tmpMem *[]int32) {
-	st1.S_48_48 = make([]int32, 16)
-	st1.S_48_32 = make([]int32, 8)
-	st1.S_32_16 = make([]int32, 8)
-	*tmpMem = make([]int32, 496)
+func (rsm *Resampler48To16L) initStateResample48To16L() {
+	rsm.st1.S_48_48 = make([]int32, 16)
+	rsm.st1.S_48_32 = make([]int32, 8)
+	rsm.st1.S_32_16 = make([]int32, 8)
 }
 
-func resetResample48To16L(st1 state48To16) {
+func (rsm Resampler48To16L) Reset() {
 	for i := 0; i < 8; i++ {
-		st1.S_48_32[i] = 0
-		st1.S_32_16[i] = 0
+		rsm.st1.S_48_32[i] = 0
+		rsm.st1.S_32_16[i] = 0
 	}
 	for i := 0; i < 16; i++ {
-		st1.S_48_48[i] = 0
+		rsm.st1.S_48_48[i] = 0
+	}
+	for i := 0; i < 496; i++ {
+		rsm.tmpMem[i] = 0
 	}
 }
 
@@ -900,40 +913,44 @@ func (rsm Resampler48To16L) CalcInOutSamplesPerOutAmt(outAmt int) (int, int) {
 	return in, rsm.calcOutSamplesPerInAmt(in)
 }
 
-func (Resampler48To16L) Resample(in []int16, out []int16) error {
+func (rsm Resampler48To16L) Resample(in []int16, out []int16) error {
 	if len(in)%480 != 0 {
 		return ErrIncorrectInLen
 	}
 
-	var st1 state48To16
-	var tmpMem []int32
-	initStateResample48To16L(&st1, &tmpMem)
+	rsm.tmpMem = make([]int32, 496)
 	for i := 0; i < len(in); i += 480 {
-		resample48To16L(in[i:], out[i/3:], st1, tmpMem)
+		resample48To16L(in[i:], out[i/3:], rsm.st1, rsm.tmpMem)
 	}
 
 	return nil
 }
 
 type Resampler11To8L struct {
+	st1    state22To16
+	tmpMem []int32
 }
 
 func NewRsm11To8L() Resampler11To8L {
-	return Resampler11To8L{}
+	rsm := Resampler11To8L{}
+	rsm.initStateResample11To8L()
+	return rsm
 }
 
-func initStateResample11To8L(st1 *state22To16, tmpMem *[]int32) {
-	st1.S_22_44 = make([]int32, 8)
-	st1.S_44_32 = make([]int32, 8)
-	st1.S_32_16 = make([]int32, 8)
-	*tmpMem = make([]int32, 104)
+func (rsm *Resampler11To8L) initStateResample11To8L() {
+	rsm.st1.S_22_44 = make([]int32, 8)
+	rsm.st1.S_44_32 = make([]int32, 8)
+	rsm.st1.S_32_16 = make([]int32, 8)
 }
 
-func resetResample11To8L(st1 state22To16) {
+func (rsm Resampler11To8L) Reset() {
 	for i := 0; i < 8; i++ {
-		st1.S_22_44[i] = 0
-		st1.S_44_32[i] = 0
-		st1.S_32_16[i] = 0
+		rsm.st1.S_22_44[i] = 0
+		rsm.st1.S_44_32[i] = 0
+		rsm.st1.S_32_16[i] = 0
+	}
+	for i := 0; i < 104; i++ {
+		rsm.tmpMem[i] = 0
 	}
 }
 
@@ -951,43 +968,51 @@ func (rsm Resampler11To8L) CalcInOutSamplesPerOutAmt(outAmt int) (int, int) {
 	return in, rsm.calcOutSamplesPerInAmt(in)
 }
 
-func (Resampler11To8L) Resample(in []int16, out []int16) error {
+func (rsm Resampler11To8L) Resample(in []int16, out []int16) error {
 	if len(in)%220 != 0 {
 		return ErrIncorrectInLen
 	}
 
-	var st1 state22To16
-	var tmpMem []int32
-	initStateResample11To8L(&st1, &tmpMem)
+	rsm.tmpMem = make([]int32, 104)
 	for i := 0; i < len(in); i += 220 {
-		Resample22To16L(in[i:], out[(i*8)/11:], st1, tmpMem)
+		Resample22To16L(in[i:], out[(i*8)/11:], rsm.st1, rsm.tmpMem)
 	}
 
 	return nil
 }
 
 type Resampler11To16L struct {
+	st1    []int32
+	st2    state22To16
+	tmpMem []int32
+	tmp    []int16
 }
 
 func NewRsm11To16L() Resampler11To16L {
-	return Resampler11To16L{}
+	rsm := Resampler11To16L{}
+	rsm.initStateResample11To16L()
+	return rsm
 }
 
-func initStateResample11To16L(st1 *[]int32, st2 *state22To16, tmpMem *[]int32, tmp *[]int16, inLen int) {
-	*st1 = make([]int32, 8)
-	st2.S_22_44 = make([]int32, 8)
-	st2.S_44_32 = make([]int32, 8)
-	st2.S_32_16 = make([]int32, 8)
-	*tmpMem = make([]int32, 104)
-	*tmp = make([]int16, inLen*2)
+func (rsm *Resampler11To16L) initStateResample11To16L() {
+	rsm.st1 = make([]int32, 8)
+	rsm.st2.S_22_44 = make([]int32, 8)
+	rsm.st2.S_44_32 = make([]int32, 8)
+	rsm.st2.S_32_16 = make([]int32, 8)
 }
 
-func resetResample11To16L(st1 []int32, st2 state22To16) {
+func (rsm Resampler11To16L) Reset() {
 	for i := 0; i < 8; i++ {
-		st1[i] = 0
-		st2.S_22_44[i] = 0
-		st2.S_44_32[i] = 0
-		st2.S_32_16[i] = 0
+		rsm.st1[i] = 0
+		rsm.st2.S_22_44[i] = 0
+		rsm.st2.S_44_32[i] = 0
+		rsm.st2.S_32_16[i] = 0
+	}
+	for i := 0; i < 104; i++ {
+		rsm.tmpMem[i] = 0
+	}
+	for i := 0; i < len(rsm.tmp); i++ {
+		rsm.tmp[i] = 0
 	}
 }
 
@@ -1005,49 +1030,56 @@ func (rsm Resampler11To16L) CalcInOutSamplesPerOutAmt(outAmt int) (int, int) {
 	return in, rsm.calcOutSamplesPerInAmt(in)
 }
 
-func (Resampler11To16L) Resample(in []int16, out []int16) error {
+func (rsm Resampler11To16L) Resample(in []int16, out []int16) error {
 	if len(in)%110 != 0 {
 		return ErrIncorrectInLen
 	}
 
-	var st1 []int32
-	var st2 state22To16
-	var tmpMem []int32
-	var tmp []int16
-	initStateResample11To16L(&st1, &st2, &tmpMem, &tmp, len(in))
+	rsm.tmpMem = make([]int32, 104)
+	rsm.tmp = make([]int16, len(in)*2)
 
-	UpsampleBy2L(in, len(in), tmp, st1)
+	UpsampleBy2L(in, len(in), rsm.tmp, rsm.st1)
 	for i := 0; i < len(in)*2; i += 220 {
-		Resample22To16L(tmp[i:], out[(i/220)*160:], st2, tmpMem)
+		Resample22To16L(rsm.tmp[i:], out[(i/220)*160:], rsm.st2, rsm.tmpMem)
 	}
 
 	return nil
 }
 
 type Resampler44To8L struct {
+	st1    State22To8
+	st2    []int32
+	tmpMem []int32
+	tmp    []int16
 }
 
 func NewRsm44To8L() Resampler44To8L {
-	return Resampler44To8L{}
+	rsm := Resampler44To8L{}
+	rsm.initStateResample44To8L()
+	return rsm
 }
 
-func initStateResample44To8L(st1 *State22To8, st2 *[]int32, tmpMem *[]int32, tmp *[]int16, inLen int) {
-	*st2 = make([]int32, 8)
-	st1.S_22_22 = make([]int32, 16)
-	st1.S_22_16 = make([]int32, 8)
-	st1.S_16_8 = make([]int32, 8)
-	*tmpMem = make([]int32, 126)
-	*tmp = make([]int16, (inLen*4)/11)
+func (rsm *Resampler44To8L) initStateResample44To8L() {
+	rsm.st2 = make([]int32, 8)
+	rsm.st1.S_22_22 = make([]int32, 16)
+	rsm.st1.S_22_16 = make([]int32, 8)
+	rsm.st1.S_16_8 = make([]int32, 8)
 }
 
-func resetResample44to8L(st1 State22To8, st2 []int32) {
+func (rsm Resampler44To8L) Reset() {
 	for i := 0; i < 16; i++ {
-		st1.S_22_22[i] = 0
+		rsm.st1.S_22_22[i] = 0
 	}
 	for i := 0; i < 8; i++ {
-		st2[i] = 0
-		st1.S_22_16[i] = 0
-		st1.S_16_8[i] = 0
+		rsm.st2[i] = 0
+		rsm.st1.S_22_16[i] = 0
+		rsm.st1.S_16_8[i] = 0
+	}
+	for i := 0; i < 126; i++ {
+		rsm.tmpMem[i] = 0
+	}
+	for i := 0; i < len(rsm.tmp); i++ {
+		rsm.tmp[i] = 0
 	}
 }
 
@@ -1065,46 +1097,49 @@ func (rsm Resampler44To8L) CalcInOutSamplesPerOutAmt(outAmt int) (int, int) {
 	return in, rsm.calcOutSamplesPerInAmt(in)
 }
 
-func (Resampler44To8L) Resample(in []int16, out []int16) error {
+func (rsm Resampler44To8L) Resample(in []int16, out []int16) error {
 	if len(in)%220 != 0 {
 		return ErrIncorrectInLen
 	}
 
-	var st1 State22To8
-	var st2 []int32
-	var tmpMem []int32
-	var tmp []int16
-	initStateResample44To8L(&st1, &st2, &tmpMem, &tmp, len(in))
+	rsm.tmpMem = make([]int32, 126)
+	rsm.tmp = make([]int16, (len(in)*4)/11)
 
 	for i := 0; i < len(in); i += 220 {
-		Resample22To8L(in[i:], tmp[(i*4)/11:], st1, tmpMem)
+		Resample22To8L(in[i:], rsm.tmp[(i*4)/11:], rsm.st1, rsm.tmpMem)
 	}
-	DownsampleBy2L(tmp, (len(in)*4)/11, out, st2)
+	DownsampleBy2L(rsm.tmp, (len(in)*4)/11, out, rsm.st2)
 
 	return nil
 }
 
 type Resampler44To16L struct {
+	st1    State22To8
+	tmpMem []int32
 }
 
 func NewRsm44To16L() Resampler44To16L {
-	return Resampler44To16L{}
+	rsm := Resampler44To16L{}
+	rsm.initStateResample44To16L()
+	return rsm
 }
 
-func initStateResample44To16L(st1 *State22To8, tmpMem *[]int32) {
-	st1.S_22_22 = make([]int32, 16)
-	st1.S_22_16 = make([]int32, 8)
-	st1.S_16_8 = make([]int32, 8)
-	*tmpMem = make([]int32, 126)
+func (rsm *Resampler44To16L) initStateResample44To16L() {
+	rsm.st1.S_22_22 = make([]int32, 16)
+	rsm.st1.S_22_16 = make([]int32, 8)
+	rsm.st1.S_16_8 = make([]int32, 8)
 }
 
-func resetResample44To16L(st1 State22To8) {
+func (rsm Resampler44To16L) Reset() {
 	for i := 0; i < 16; i++ {
-		st1.S_22_22[i] = 0
+		rsm.st1.S_22_22[i] = 0
 	}
 	for i := 0; i < 8; i++ {
-		st1.S_22_16[i] = 0
-		st1.S_16_8[i] = 0
+		rsm.st1.S_22_16[i] = 0
+		rsm.st1.S_16_8[i] = 0
+	}
+	for i := 0; i < 126; i++ {
+		rsm.tmpMem[i] = 0
 	}
 }
 
@@ -1122,17 +1157,14 @@ func (rsm Resampler44To16L) CalcInOutSamplesPerOutAmt(outAmt int) (int, int) {
 	return in, rsm.calcOutSamplesPerInAmt(in)
 }
 
-func (Resampler44To16L) Resample(in []int16, out []int16) error {
+func (rsm Resampler44To16L) Resample(in []int16, out []int16) error {
 	if len(in)%220 != 0 {
 		return ErrIncorrectInLen
 	}
 
-	var st1 State22To8
-	var tmpMem []int32
-	initStateResample44To16L(&st1, &tmpMem)
-
+	rsm.tmpMem = make([]int32, 126)
 	for i := 0; i < len(in); i += 220 {
-		Resample22To8L(in[i:], out[(i*4)/11:], st1, tmpMem)
+		Resample22To8L(in[i:], out[(i*4)/11:], rsm.st1, rsm.tmpMem)
 	}
 
 	return nil

@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"sync"
 	"testing"
 
 	"resampler/internal/resample/resamplerauto"
@@ -18,30 +19,31 @@ import (
 var ErrExpectToCallCalcNeedSamplesPerOutAmtBefore = errors.New("error expected to call resamplerAutoTest.CalcNeedSamplesPerOutAmtBefore")
 
 type resamplerAutoTest struct {
-	inRate    int
-	outRate   int
-	rsmT      resamplerauto.ResamplerT
-	rsm       resampleri.Resampler
-	resampled []int16
+	inRate      int
+	outRate     int
+	rsmT        resamplerauto.ResamplerT
+	rsm         resampleri.Resampler
+	resampled   []int16
+	maxErrRateP *float64
 }
 
-func (resamplerAutoTest) New(inRate, outRate int, rsmT resamplerauto.ResamplerT) *resamplerAutoTest {
-	rsm, err := resamplerauto.New(inRate, outRate, rsmT)
+func (resamplerAutoTest) New(inRate, outRate int, rsmT resamplerauto.ResamplerT, maxErrRateP *float64) *resamplerAutoTest {
+	rsm, _, err := resamplerauto.New(inRate, outRate, rsmT, maxErrRateP)
 	if err != nil {
 		panic(err)
 	}
 	res := new(resamplerAutoTest)
-	*res = resamplerAutoTest{inRate, outRate, rsmT, rsm, nil}
+	*res = resamplerAutoTest{inRate, outRate, rsmT, rsm, nil, maxErrRateP}
 	return res
 }
 
 func (rsm resamplerAutoTest) Copy() testutils.TestResampler {
-	res := resamplerAutoTest{}.New(rsm.inRate, rsm.outRate, rsm.rsmT)
+	res := resamplerAutoTest{}.New(rsm.inRate, rsm.outRate, rsm.rsmT, rsm.maxErrRateP)
 	res.resampled = make([]int16, len(rsm.resampled))
 	return res
 }
 func (rsm resamplerAutoTest) String() string {
-	return fmt.Sprintf("%d_to_%d_resamplerAuto", rsm.inRate, rsm.outRate)
+	return fmt.Sprintf("%d_to_%d_resamplerAuto_%s", rsm.inRate, rsm.outRate, rsm.rsmT)
 }
 func (rsm *resamplerAutoTest) Resample(inp []int16) error { // care moved allocation of output to CalcNeesSamples - logc you can't resample without that
 	if rsm.resampled == nil {
@@ -67,8 +69,8 @@ func (rsm resamplerAutoTest) Get(ind int) (int16, error) {
 	}
 	return rsm.resampled[ind], nil
 }
-func (rsm resamplerAutoTest) UnresampledInAmt() int {
-	return 0
+func (rsm resamplerAutoTest) UnresampledUngetInAmt() (int, int) {
+	return 0, 0
 }
 
 func TestResampleAuto_SinWave(t *testing.T) {
@@ -78,21 +80,56 @@ func TestResampleAuto_SinWave(t *testing.T) {
 		}
 	}()
 
-	waveDurS := float64(20)
-	for _, rsmT := range []resamplerauto.ResamplerT{resamplerauto.ResamplerConstExpr, resamplerauto.ResamplerSpline, resamplerauto.ResamplerFFT} {
+	waveDurS := float64(60)
+	for _, rsmT := range []resamplerauto.ResamplerT{resamplerauto.ResamplerConstExpr, resamplerauto.ResamplerSpline, resamplerauto.ResamplerFFT, resamplerauto.ResamplerBestFit} {
 		for _, inRate := range []int{8000, 11000, 11025, 16000, 44000, 44100, 48000} {
 			for _, outRate := range []int{8000, 16000} {
 				if testutils.CheckRsmCompAb(rsmT, inRate, outRate) != nil {
 					continue
 				}
 				log.Printf("Testing %s from %d to %d\n", rsmT.String(), inRate, outRate)
-				rsm := resamplerAutoTest{}.New(inRate, outRate, rsmT)
-				var tObj testutils.TestObj = testutils.TestObj{}.New(testutils.CutWave{}.New(testutils.SinWave{}.New(0, waveDurS, inRate, outRate), 0, rsm.calcNeedSamplesPerOutAmt((int(waveDurS)-10)*outRate)), rsm, 1, t, testutils.TestOpts{}.NewDefault())
+				rsm := resamplerAutoTest{}.New(inRate, outRate, rsmT, nil)
+				var tObj testutils.TestObj = testutils.TestObj{}.New(testutils.CutWave{}.New(testutils.SinWave{}.New(0, waveDurS, inRate, outRate), 0, rsm.calcNeedSamplesPerOutAmt((int(waveDurS)-30)*outRate)), rsm, 1, t, testutils.TestOpts{}.NewDefault())
 				err := tObj.Run()
 				if !assert.NoError(t, err, fmt.Sprintf("failed to convert via %s from %d to %d", rsmT, inRate, outRate)) {
+					t.Error(err)
+				}
+				err = tObj.Save("rsm_auto")
+				if !assert.NoError(t, err, "failed to save test results") {
 					t.Error(err)
 				}
 			}
 		}
 	}
+}
+
+func TestResampleAutoDiffErrsNotFall_SinWave(t *testing.T) {
+	defer func() {
+		if r := recover(); r != nil {
+			t.Error(r)
+		}
+	}()
+
+	waveDurS := float64(30)
+	wg := &sync.WaitGroup{}
+	for _, rsmT := range []resamplerauto.ResamplerT{resamplerauto.ResamplerConstExpr, resamplerauto.ResamplerSpline, resamplerauto.ResamplerFFT, resamplerauto.ResamplerBestFit} {
+		for _, inRate := range []int{8000, 11000, 11025, 16000, 44000, 44100, 48000} {
+			for _, outRate := range []int{8000, 16000} {
+				if testutils.CheckRsmCompAb(rsmT, inRate, outRate) != nil {
+					continue
+				}
+				for _, acc := range []float64{1, 1e-1, 1e-2, 1e-3, 1e-4, 1e-5, 1e-6, 1e-7, 1e-8, 1e-9, 0} {
+					rsm := resamplerAutoTest{}.New(inRate, outRate, rsmT, &acc)
+					opts := testutils.TestOpts{}.NewDefault().NotFailOnHighDurationErr().NotCalcDuration().WithWaitGroup(wg)
+					if rsm.calcNeedSamplesPerOutAmt((int(waveDurS)-5)*outRate)-5 >= int(waveDurS)*inRate {
+						continue
+					}
+					var tObj testutils.TestObj = testutils.TestObj{}.New(testutils.CutWave{}.New(testutils.SinWave{}.New(0, waveDurS, inRate, outRate), 0, rsm.calcNeedSamplesPerOutAmt((int(waveDurS)-5)*outRate)), rsm, 1, t, opts)
+					wg.Add(1)
+					go tObj.Run()
+				}
+			}
+		}
+	}
+	wg.Wait()
 }

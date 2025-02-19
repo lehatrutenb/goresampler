@@ -2,8 +2,12 @@ package resamplerspline
 
 import (
 	"math"
+	"resampler/internal/resampleutils"
 	"resampler/internal/utils"
 )
+
+const minInAmt = 30 //  to reduce infl from edges to spline
+const baseTimeErrRate = 1e-6
 
 type WaveInt16 struct {
 	data  []int16
@@ -17,45 +21,34 @@ type borderCond struct {
 }
 
 type ResamplerSpline struct {
-	in      []float32
-	inRate  int
-	outRate int
-	bc      borderCond
+	in          []float32
+	inRate      int
+	outRate     int
+	bc          borderCond
+	batchInAmt  int
+	batchOutAmt int
 }
 
-func New(inRate, outRate int) ResamplerSpline {
-	return ResamplerSpline{inRate: inRate, outRate: outRate, bc: borderCond{0, 0, 0, 0, 2, 2}}
+/*
+if you use New with last maxErrRateP=nil - ignore ok value if err doesn't matter (but it can't be large)
+return configured resampler
+
+try to find batch input amt to have less err (0..1) rate than given maxErrRateP
+if failed to find such batch to fit maxErrRate,  second arg is false, otherwise true (but even with false, resampler is fine to use)
+*/
+func New(inRate, outRate int, maxErrRateP *float64) (ResamplerSpline, bool) {
+	var maxErrRate = baseTimeErrRate
+	if maxErrRateP != nil {
+		maxErrRate = *maxErrRateP
+	}
+	bInAmt, bOutAmt, ok := CalcInAmtPerErrRate(maxErrRate, inRate, outRate)
+	return ResamplerSpline{inRate: inRate, outRate: outRate, bc: borderCond{0, 0, 0, 0, 2, 2}, batchInAmt: bInAmt, batchOutAmt: bOutAmt}, ok
 }
 
 type Spline struct {
 	ys   []float32 // f(x) in givens xs
 	yds  []float32 // f(x)' in given xs
 	step float32   // xs are 0, step, 2*step, ...
-}
-
-// don't really need that func currently cause step is same between all xs, but written not to return to it later
-// have Mx=D where M - three diag A B C - "метод прогонки"
-func _solveMatrixEq(as []float32, bs []float32, cs []float32, ds []float32) []float32 { // TODO work with possible divide by 0 - return err as result or better another solution?
-	sz := len(as) // everywhere size is same so lets make var for it
-	xs := make([]float32, sz)
-	alphs := make([]float32, sz)
-	betths := make([]float32, sz)
-
-	// calc coefs
-	alphs[1] = -cs[0] / bs[0]
-	betths[1] = ds[0] / bs[0]
-	for ind := 1; ind+1 < sz; ind++ {
-		nx := as[ind]*alphs[ind] + bs[ind]
-		alphs[ind+1] = -cs[ind] / nx
-		betths[ind+1] = (ds[ind] - as[ind]*betths[ind]) / nx
-	}
-	//calc xs
-	xs[sz-1] = (ds[sz-1] - as[sz-1]*betths[sz-1]) / (as[sz-1]*alphs[sz-1] + bs[sz-1])
-	for ind := sz - 1; ind > 0; ind-- {
-		xs[ind-1] = alphs[ind]*xs[ind] + betths[ind]
-	}
-
-	return xs
 }
 
 // have Mx=D where M - three diag A B C where A = [x1] * len(A), C = [x2] * len(C), B = [x3] * len(B)
@@ -87,7 +80,7 @@ func solveMatrixEqSimpleDiags(a float32, b float32, c float32, ds []float32, bc 
 	return xs
 }
 
-func (_ Spline) New(ys []float32, step float32, bc borderCond) Spline {
+func (Spline) New(ys []float32, step float32, bc borderCond) Spline {
 	// TODO check to make step int
 
 	yds := func() []float32 { // calc discerete diffs
@@ -104,23 +97,6 @@ func (_ Spline) New(ys []float32, step float32, bc borderCond) Spline {
 		return solveMatrixEqSimpleDiags(lambda, 2, mu, cs, bc)
 	}()
 	return Spline{ys, yds, step}
-}
-
-func (sp Spline) _calcNewY(x float32) float32 {
-	il := min(int32(len(sp.ys)-2), max(0, int32(math.Floor(float64(x/sp.step)))))
-	ir := il + 1
-	l := sp.step * float32(il)
-	r := sp.step * float32(ir)
-
-	ld := x - l
-	rd := x - r
-
-	st := sp.step
-	st2 := st * st
-
-	first := sp.yds[il]*ld*rd*rd/st2 + sp.ys[il]*(2*ld*rd*rd/(st2*st)+rd*rd/st2)
-	second := sp.yds[ir]*ld*ld*rd/st2 + sp.ys[ir]*(-2*ld*ld*rd/(st2*st)+ld*ld/st2)
-	return first + second
 }
 
 func (sp Spline) calcNewStep(newSt float64, amt int) []float32 {
@@ -154,14 +130,39 @@ func (sw *ResamplerSpline) resample(sp Spline, out *[]float32) {
 	*out = sp.calcNewStep(rateToSplineStep(sw.outRate), len(*out))
 }
 
-// divided to speed up if want to convert to many rates - to build spline once
+/*
+try to find batch input amt to have less err (0..1) rate than given
+(check calcs inside)
 
-func (sw ResamplerSpline) CalcNeedSamplesPerOutAmt(outAmt int) int {
-	return int(math.Ceil(float64(sw.inRate*outAmt) / float64(sw.outRate)))
+return false if failes to find such value < 1e5 and best value found
+return true if find such value
+*/
+func CalcInAmtPerErrRate(maxErr float64, inRate int, outRate int) (bInAmt, bOutAmt int, ok bool) {
+	bInAmt = minInAmt
+	bOutAmt = resampleutils.GetOutAmtPerInAmt(inRate, outRate, bInAmt)
+	bErr := 1e9
+	for inAmt := minInAmt; inAmt < 1e5; inAmt++ {
+		vMin, vMax := resampleutils.GetMinMaxSmplsAmt(inRate, outRate, int64(inAmt))
+
+		if resampleutils.CheckErrMinMax(vMin, vMax, maxErr) {
+			return inAmt, resampleutils.GetOutAmtPerInAmt(inRate, outRate, inAmt), true
+		}
+		if vMin/vMax < bErr {
+			bErr = vMin / vMax
+			bInAmt = inAmt
+		}
+	}
+
+	return bInAmt, bOutAmt, false
 }
 
+func (sw ResamplerSpline) CalcNeedSamplesPerOutAmt(outAmt int) int {
+	return ((outAmt + sw.batchOutAmt - 1) / sw.batchOutAmt) * sw.batchInAmt
+}
+
+// not really need so strict - like inAmt % sw.batchInAmt == 0 , but it's garanted
 func (sw ResamplerSpline) calcOutSamplesPerInAmt(inAmt int) int {
-	return int(math.Ceil(float64(sw.outRate*inAmt) / float64(sw.inRate)))
+	return (inAmt / sw.batchInAmt) * sw.batchOutAmt
 }
 
 func (rsm ResamplerSpline) CalcInOutSamplesPerOutAmt(outAmt int) (int, int) {
@@ -175,4 +176,8 @@ func (sw ResamplerSpline) Resample(in, out []int16) error {
 	sw.resample(Spline{}.New(sw.in, float32(rateToSplineStep(sw.inRate)), sw.bc), &outF)
 	copy(out, utils.AFloatToS16(outF))
 	return nil
+}
+
+func (rsm ResamplerSpline) Reset() { // TODO logically should be empty but not tested
+	panic("UNIMPLEMENTED")
 }
