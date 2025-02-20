@@ -1,0 +1,27 @@
+goos: linux
+goarch: amd64
+cpu: 12th Gen Intel(R) Core(TM) i5-12400
+BenchmarkConstExpr11000_8000-12     	     108	  10154401 ns/op
+BenchmarkConstExpr16000_8000-12     	     727	   1612008 ns/op
+BenchmarkConstExpr44000_8000-12     	     158	   7457905 ns/op
+BenchmarkConstExpr48000_8000-12     	     182	   6583765 ns/op
+BenchmarkConstExpr8000_16000-12     	     344	   3261191 ns/op
+BenchmarkConstExpr11000_16000-12    	      50	  22469333 ns/op
+BenchmarkConstExpr44000_16000-12    	     176	   6579615 ns/op
+BenchmarkConstExpr48000_16000-12    	     202	   5757381 ns/op
+BenchmarkSpline11025_8000-12        	      68	  17338390 ns/op
+BenchmarkSpline16000_8000-12        	      96	  13640382 ns/op
+BenchmarkSpline44100_8000-12        	     128	  11468649 ns/op
+BenchmarkSpline48000_8000-12        	     136	   9987151 ns/op
+BenchmarkSpline8000_16000-12        	      39	  28821000 ns/op
+BenchmarkSpline11025_16000-12       	      40	  26043877 ns/op
+BenchmarkSpline44100_16000-12       	      87	  11654680 ns/op
+BenchmarkSpline48000_16000-12       	     129	   9192958 ns/op
+BenchmarkFFT11025_8000-12           	       2	 670654929 ns/op
+BenchmarkFFT16000_8000-12           	       3	 372228779 ns/op
+BenchmarkFFT44100_8000-12           	       1	2586885563 ns/op
+BenchmarkFFT48000_8000-12           	       2	 576421399 ns/op
+BenchmarkFFT44100_16000-12          	       1	2622534537 ns/op
+BenchmarkFFT48000_16000-12          	       2	 556692495 ns/op
+PASS
+ok  	command-line-arguments	84.066s
