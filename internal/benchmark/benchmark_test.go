@@ -8,10 +8,10 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/lehatrutenb/go_resampler/internal/resample/resamplerauto"
-	"github.com/lehatrutenb/go_resampler/internal/resample/resampleri"
-	testutils "github.com/lehatrutenb/go_resampler/internal/test_utils"
-	"github.com/lehatrutenb/go_resampler/internal/utils"
+	testutils "github.com/lehatrutenb/goresampler/internal/test_utils"
+	"github.com/lehatrutenb/goresampler/internal/utils"
+	"github.com/lehatrutenb/goresampler/resamplerauto"
+	"github.com/lehatrutenb/goresampler/resampleri"
 )
 
 var MIN_RESAMPLE_DURATION_S int // min duration of input wave in secs

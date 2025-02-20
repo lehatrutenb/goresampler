@@ -4,8 +4,8 @@ import (
 	"errors"
 	"math"
 
-	"github.com/lehatrutenb/go_resampler/internal/resampleutils"
-	"github.com/lehatrutenb/go_resampler/internal/utils"
+	"github.com/lehatrutenb/goresampler/internal/resampleutils"
+	"github.com/lehatrutenb/goresampler/internal/utils"
 )
 
 var ErrGotIncorrectArrSzs = errors.New("got unexpected in or out array sizes")

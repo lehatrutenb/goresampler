@@ -9,8 +9,8 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/lehatrutenb/go_resampler/internal/resample/resamplerauto"
-	testutils "github.com/lehatrutenb/go_resampler/internal/test_utils"
+	testutils "github.com/lehatrutenb/goresampler/internal/test_utils"
+	"github.com/lehatrutenb/goresampler/resamplerauto"
 
 	"github.com/nao1215/markdown"
 )

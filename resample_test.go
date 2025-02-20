@@ -1,4 +1,4 @@
-package resample_test
+package goresampler_test
 
 import (
 	"errors"
@@ -8,16 +8,16 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/lehatrutenb/go_resampler/internal/resample"
-	"github.com/lehatrutenb/go_resampler/internal/resample/resamplerauto"
-	testutils "github.com/lehatrutenb/go_resampler/internal/test_utils"
+	"github.com/lehatrutenb/goresampler"
+	testutils "github.com/lehatrutenb/goresampler/internal/test_utils"
+	"github.com/lehatrutenb/goresampler/resamplerauto"
 
 	"github.com/stretchr/testify/assert"
 )
 
 var ErrUnexpTestCfg = errors.New("got unexpected test cfg")
-var PATH_TO_BASE_WAVES = "../../base_waves/"
-var testPath = "../../test/"
+var PATH_TO_BASE_WAVES = "./base_waves/"
+var testPath = "./test/"
 
 type batchWorkType struct {
 	addLargeBatches bool
@@ -36,7 +36,7 @@ type resamplerBatchTest struct {
 	inRate    int
 	outRate   int
 	rsmT      resamplerauto.ResamplerT
-	rsm       resample.ResamplerBatch
+	rsm       goresampler.ResamplerBatch
 	resampled []int16
 	opts      batchWorkType
 }
@@ -47,7 +47,7 @@ func (resamplerBatchTest) New(inRate, outRate int, rsmT resamplerauto.ResamplerT
 		panic(err)
 	}
 	res := new(resamplerBatchTest)
-	*res = resamplerBatchTest{inRate, outRate, rsmT, resample.New(rsm), nil, opts}
+	*res = resamplerBatchTest{inRate, outRate, rsmT, goresampler.New(rsm), nil, opts}
 	return res
 }
 
@@ -88,7 +88,7 @@ func (rsm *resamplerBatchTest) Resample(inp []int16) error { //  TODO RM COMM? c
 		ind += rsm.opts.getBSz
 		rsm.resampled = slices.Grow(rsm.resampled, rsm.opts.getBSz)
 	}
-	if !errors.Is(err, resample.ErrNotEnoughSamples) {
+	if !errors.Is(err, goresampler.ErrNotEnoughSamples) {
 		return err
 	}
 
