@@ -4,13 +4,14 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"resampler/internal/resample/resamplerauto"
-	"resampler/internal/resample/resampleri"
-	testutils "resampler/internal/test_utils"
-	"resampler/internal/utils"
 	"strconv"
 	"strings"
 	"testing"
+
+	"github.com/lehatrutenb/go_resampler/internal/resample/resamplerauto"
+	"github.com/lehatrutenb/go_resampler/internal/resample/resampleri"
+	testutils "github.com/lehatrutenb/go_resampler/internal/test_utils"
+	"github.com/lehatrutenb/go_resampler/internal/utils"
 )
 
 var MIN_RESAMPLE_DURATION_S int // min duration of input wave in secs

@@ -4,12 +4,13 @@ import (
 	"errors"
 	"fmt"
 	"log"
-	"resampler/internal/resample"
-	"resampler/internal/resample/resamplerauto"
-	testutils "resampler/internal/test_utils"
 	"slices"
 	"sync"
 	"testing"
+
+	"github.com/lehatrutenb/go_resampler/internal/resample"
+	"github.com/lehatrutenb/go_resampler/internal/resample/resamplerauto"
+	testutils "github.com/lehatrutenb/go_resampler/internal/test_utils"
 
 	"github.com/stretchr/testify/assert"
 )

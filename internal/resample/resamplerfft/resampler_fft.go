@@ -3,8 +3,9 @@ package resamplerfft
 import (
 	"errors"
 	"math"
-	"resampler/internal/resampleutils"
-	"resampler/internal/utils"
+
+	"github.com/lehatrutenb/go_resampler/internal/resampleutils"
+	"github.com/lehatrutenb/go_resampler/internal/utils"
 )
 
 var ErrGotIncorrectArrSzs = errors.New("got unexpected in or out array sizes")
