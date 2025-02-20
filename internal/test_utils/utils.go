@@ -3,9 +3,10 @@ package testutils
 import (
 	"errors"
 	"fmt"
-	"resampler/internal/resample/resamplerauto"
-	"resampler/internal/resample/resampleri"
 	"sync"
+
+	"github.com/lehatrutenb/go_resampler/internal/resample/resamplerauto"
+	"github.com/lehatrutenb/go_resampler/internal/resample/resampleri"
 )
 
 var (

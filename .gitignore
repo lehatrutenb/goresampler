@@ -7,6 +7,8 @@
 *.dll
 *.so
 *.dylib
+*.vscode
+.*
 
 # Test binary, built with `go test -c`
 *.test
@@ -24,6 +26,8 @@ go.work.sum
 test/
 prev_test/
 base_waves/
+
+audio_urls
 
 # env file
 .env

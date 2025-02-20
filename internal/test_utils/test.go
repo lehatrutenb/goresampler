@@ -2,10 +2,11 @@ package testutils
 
 import (
 	"math"
-	"resampler/internal/utils"
 	"sync"
 	"testing"
 	"time"
+
+	"github.com/lehatrutenb/go_resampler/internal/utils"
 )
 
 type TestWave interface {

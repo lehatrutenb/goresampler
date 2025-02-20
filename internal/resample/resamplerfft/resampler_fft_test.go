@@ -2,10 +2,11 @@ package resamplerfft_test
 
 import (
 	"errors"
-	"resampler/internal/resample/resamplerfft"
-	testutils "resampler/internal/test_utils"
 	"sync"
 	"testing"
+
+	"github.com/lehatrutenb/go_resampler/internal/resample/resamplerfft"
+	testutils "github.com/lehatrutenb/go_resampler/internal/test_utils"
 
 	"fmt"
 

@@ -1,4 +1,4 @@
-module resampler
+module github.com/lehatrutenb/go_resampler
 
 go 1.22.6
 

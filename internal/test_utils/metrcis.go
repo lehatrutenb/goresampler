@@ -4,7 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
-	"resampler/internal/utils"
+
+	"github.com/lehatrutenb/go_resampler/internal/utils"
 
 	"github.com/go-audio/audio"
 	"github.com/go-audio/wav"
