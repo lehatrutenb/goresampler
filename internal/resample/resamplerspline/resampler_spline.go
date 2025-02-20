@@ -2,8 +2,9 @@ package resamplerspline
 
 import (
 	"math"
-	"resampler/internal/resampleutils"
-	"resampler/internal/utils"
+
+	"github.com/lehatrutenb/go_resampler/internal/resampleutils"
+	"github.com/lehatrutenb/go_resampler/internal/utils"
 )
 
 const minInAmt = 30 //  to reduce infl from edges to spline
