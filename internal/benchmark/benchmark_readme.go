@@ -6,10 +6,11 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"resampler/internal/resample/resamplerauto"
-	testutils "resampler/internal/test_utils"
 	"slices"
 	"strings"
+
+	"github.com/lehatrutenb/go_resampler/internal/resample/resamplerauto"
+	testutils "github.com/lehatrutenb/go_resampler/internal/test_utils"
 
 	"github.com/nao1215/markdown"
 )

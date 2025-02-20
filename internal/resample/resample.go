@@ -2,7 +2,8 @@ package resample
 
 import (
 	"errors"
-	"resampler/internal/resample/resampleri"
+
+	"github.com/lehatrutenb/go_resampler/internal/resample/resampleri"
 
 	"golang.org/x/exp/slices"
 )

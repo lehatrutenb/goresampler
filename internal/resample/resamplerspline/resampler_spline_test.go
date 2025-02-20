@@ -2,10 +2,12 @@ package resamplerspline_test
 
 import (
 	"errors"
-	"resampler/internal/resample/resamplerspline"
-	testutils "resampler/internal/test_utils"
 	"sync"
 	"testing"
+
+	testutils "github.com/lehatrutenb/go_resampler/internal/test_utils"
+
+	"github.com/lehatrutenb/go_resampler/internal/resample/resamplerspline"
 
 	"fmt"
 

@@ -3,9 +3,10 @@ package resamplerce_test
 import (
 	"errors"
 	"fmt"
-	"resampler/internal/resample/resamplerauto"
-	resampleri "resampler/internal/resample/resampleri"
-	testutils "resampler/internal/test_utils"
+
+	"github.com/lehatrutenb/go_resampler/internal/resample/resamplerauto"
+	resampleri "github.com/lehatrutenb/go_resampler/internal/resample/resampleri"
+	testutils "github.com/lehatrutenb/go_resampler/internal/test_utils"
 
 	"testing"
 
