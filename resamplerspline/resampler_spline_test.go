@@ -5,9 +5,9 @@ import (
 	"sync"
 	"testing"
 
-	testutils "github.com/lehatrutenb/go_resampler/internal/test_utils"
+	testutils "github.com/lehatrutenb/goresampler/internal/test_utils"
 
-	"github.com/lehatrutenb/go_resampler/internal/resample/resamplerspline"
+	"github.com/lehatrutenb/goresampler/resamplerspline"
 
 	"fmt"
 

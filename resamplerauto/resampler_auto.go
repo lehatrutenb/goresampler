@@ -3,10 +3,10 @@ package resamplerauto
 import (
 	"errors"
 
-	"github.com/lehatrutenb/go_resampler/internal/resample/resamplerce"
-	"github.com/lehatrutenb/go_resampler/internal/resample/resamplerfft"
-	"github.com/lehatrutenb/go_resampler/internal/resample/resampleri"
-	"github.com/lehatrutenb/go_resampler/internal/resample/resamplerspline"
+	"github.com/lehatrutenb/goresampler/resamplerce"
+	"github.com/lehatrutenb/goresampler/resamplerfft"
+	"github.com/lehatrutenb/goresampler/resampleri"
+	"github.com/lehatrutenb/goresampler/resamplerspline"
 )
 
 var (

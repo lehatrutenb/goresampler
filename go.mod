@@ -1,4 +1,4 @@
-module github.com/lehatrutenb/go_resampler
+module github.com/lehatrutenb/goresampler
 
 go 1.22.6
 
@@ -16,6 +16,7 @@ require (
 	github.com/go-pdf/fpdf v0.9.0 // indirect
 	github.com/golang/freetype v0.0.0-20170609003504-e2365dfdc4a0 // indirect
 	github.com/karrick/godirwalk v1.17.0 // indirect
+	github.com/lehatrutenb/test_golib_imp_repo v0.0.0-20250220163154-701d5ede52a6 // indirect
 	github.com/mattn/go-runewidth v0.0.9 // indirect
 	github.com/mjibson/go-dsp v0.0.0-20180508042940-11479a337f12 // indirect
 	github.com/nao1215/markdown v0.7.0 // indirect

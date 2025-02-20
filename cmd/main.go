@@ -3,7 +3,7 @@ package main
 import (
 	"log"
 
-	"github.com/lehatrutenb/go_resampler/internal/benchmark"
+	"github.com/lehatrutenb/goresampler/internal/benchmark"
 )
 
 func main() {
