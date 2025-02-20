@@ -21,5 +21,9 @@
 go.work
 go.work.sum
 
+test/
+prev_test/
+base_waves/
+
 # env file
 .env
