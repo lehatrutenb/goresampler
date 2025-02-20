@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/lehatrutenb/go_resampler/internal/resample/resamplerauto"
-	"github.com/lehatrutenb/go_resampler/internal/resample/resampleri"
+	"github.com/lehatrutenb/goresampler/resamplerauto"
+	"github.com/lehatrutenb/goresampler/resampleri"
 )
 
 var (

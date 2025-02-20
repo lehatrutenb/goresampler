@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/lehatrutenb/go_resampler/internal/utils"
+	"github.com/lehatrutenb/goresampler/internal/utils"
 )
 
 type TestWave interface {

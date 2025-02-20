@@ -6,13 +6,13 @@ import (
 	"math"
 	"os"
 
-	"github.com/lehatrutenb/go_resampler/internal/utils"
+	"github.com/lehatrutenb/goresampler/internal/utils"
 
 	"github.com/go-audio/audio"
 	"github.com/go-audio/wav"
 )
 
-var PATH_TO_BASE_WAVES = "../../../base_waves/"
+var PATH_TO_BASE_WAVES = "../base_waves/"
 
 type SinWave struct {
 	leftB        float64

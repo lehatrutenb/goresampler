@@ -1,9 +1,9 @@
-package resample
+package goresampler
 
 import (
 	"errors"
 
-	"github.com/lehatrutenb/go_resampler/internal/resample/resampleri"
+	"github.com/lehatrutenb/goresampler/resampleri"
 
 	"golang.org/x/exp/slices"
 )

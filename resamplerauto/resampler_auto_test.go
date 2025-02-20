@@ -7,9 +7,9 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/lehatrutenb/go_resampler/internal/resample/resamplerauto"
-	"github.com/lehatrutenb/go_resampler/internal/resample/resampleri"
-	testutils "github.com/lehatrutenb/go_resampler/internal/test_utils"
+	testutils "github.com/lehatrutenb/goresampler/internal/test_utils"
+	"github.com/lehatrutenb/goresampler/resamplerauto"
+	"github.com/lehatrutenb/goresampler/resampleri"
 
 	"github.com/stretchr/testify/assert"
 )
