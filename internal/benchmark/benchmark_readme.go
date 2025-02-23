@@ -9,8 +9,8 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/lehatrutenb/goresampler"
 	testutils "github.com/lehatrutenb/goresampler/internal/test_utils"
-	"github.com/lehatrutenb/goresampler/resamplerauto"
 
 	"github.com/nao1215/markdown"
 )
@@ -25,7 +25,7 @@ func CreateReadmeAudioTable() error {
 
 	// create order same as audio urls appear in file
 	order := make([][3]int, 0, 3*5*2)
-	for _, rsmT := range []resamplerauto.ResamplerT{resamplerauto.ResamplerConstExpr, resamplerauto.ResamplerSpline, resamplerauto.ResamplerFFT} {
+	for _, rsmT := range []goresampler.ResamplerT{goresampler.ResamplerConstExprT, goresampler.ResamplerSplineT, goresampler.ResamplerFFtT} {
 		for _, outRate := range []int{8000, 16000} {
 			for _, inRate := range []int{8000, 11000, 11025, 16000, 44000, 44100, 48000} {
 				if testutils.CheckRsmCompAb(rsmT, inRate, outRate) != nil {
@@ -76,7 +76,7 @@ func CreateReadmeAudioTable() error {
 	md := bytes.NewBuffer(buf)
 	err = markdown.NewMarkdown(md).H2("Resample results").
 		Table(markdown.TableSet{
-			Header: []string{"/", resamplerauto.ResamplerT(1).String(), resamplerauto.ResamplerT(2).String(), resamplerauto.ResamplerT(3).String(), "FFMPEG resampling"},
+			Header: []string{"/", goresampler.ResamplerT(1).String(), goresampler.ResamplerT(2).String(), goresampler.ResamplerT(3).String(), "FFMPEG resampling"},
 			Rows:   urls,
 		}).Build()
 

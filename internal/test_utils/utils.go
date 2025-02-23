@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/lehatrutenb/goresampler/resamplerauto"
-	"github.com/lehatrutenb/goresampler/resampleri"
+	"github.com/lehatrutenb/goresampler"
+	"github.com/lehatrutenb/goresampler/internal/utils"
 )
 
 var (
@@ -14,7 +14,7 @@ var (
 	ErrNotExpResampling = errors.New("called not expected resampling cfg")
 )
 
-func CalcMinOutSamplesPerInAmt(inAmt int, rsm resampleri.Resampler) int {
+func CalcMinOutSamplesPerInAmt(inAmt int, rsm goresampler.Resampler) int {
 	l, r := 0, inAmt*2+int(1e6) // cause max multiplier in rsm 8->16 // add 1e6 to go over restrictions
 	for l+1 < r {
 		mid := (l + r) / 2
@@ -24,18 +24,18 @@ func CalcMinOutSamplesPerInAmt(inAmt int, rsm resampleri.Resampler) int {
 			r = mid
 		}
 	}
-	return resampleri.GetSecondReturnedVal(rsm.CalcInOutSamplesPerOutAmt(r))
+	return utils.GetSecondReturnedVal(rsm.CalcInOutSamplesPerOutAmt(r))
 }
 
-func calcMinInSamplesAmt(inAmt int, rsm resampleri.Resampler) int {
+func calcMinInSamplesAmt(inAmt int, rsm goresampler.Resampler) int {
 	return rsm.CalcNeedSamplesPerOutAmt(CalcMinOutSamplesPerInAmt(inAmt, rsm))
 }
 
-func GetWaveName(rsmT resamplerauto.ResamplerT, inRate, outRate int) string {
+func GetWaveName(rsmT goresampler.ResamplerT, inRate, outRate int) string {
 	return fmt.Sprintf("%d:%d:%d", rsmT, inRate, outRate)
 }
 
-func loadRealWave(samplesAmt int, rsmT resamplerauto.ResamplerT, waveInd, inRate, outRate int, res map[string]CutWave, mtx *sync.Mutex, gr *sync.WaitGroup, path string) {
+func loadRealWave(samplesAmt int, rsmT goresampler.ResamplerT, waveInd, inRate, outRate int, res map[string]CutWave, mtx *sync.Mutex, gr *sync.WaitGroup, path string) {
 	defer gr.Done()
 
 	wave := CutWave{}.New(RealWave{}.New(waveInd, inRate, &outRate, &path), 0, samplesAmt).(CutWave)
@@ -62,15 +62,15 @@ func LoadAllRealWaves(waveInd int, pathToBaseWaves *string, samplesAmt *int, sam
 	gr := &sync.WaitGroup{}
 	for _, outRate := range []int{8000, 16000} {
 		for _, inRate := range []int{8000, 11000, 11025, 16000, 44000, 44100, 48000} {
-			for _, rsmT := range []resamplerauto.ResamplerT{resamplerauto.ResamplerConstExpr, resamplerauto.ResamplerSpline, resamplerauto.ResamplerFFT} {
-				if notStrictAmt != nil && rsmT != resamplerauto.ResamplerConstExpr && CheckRsmCompAb(resamplerauto.ResamplerConstExpr, inRate, outRate) == nil { // if not strict set - wave not depends on rsm type
+			for _, rsmT := range []goresampler.ResamplerT{goresampler.ResamplerConstExprT, goresampler.ResamplerSplineT, goresampler.ResamplerFFtT} {
+				if notStrictAmt != nil && rsmT != goresampler.ResamplerConstExprT && CheckRsmCompAb(goresampler.ResamplerConstExprT, inRate, outRate) == nil { // if not strict set - wave not depends on rsm type
 					continue
 				}
 				if CheckRsmCompAb(rsmT, inRate, outRate) != nil {
 					continue
 				}
 				gr.Add(1)
-				rsm, _, err := resamplerauto.New(inRate, outRate, rsmT, nil)
+				rsm, _, err := goresampler.NewResamplerAuto(inRate, outRate, rsmT, nil)
 				if err != nil {
 					panic(err)
 				}
@@ -90,14 +90,14 @@ func LoadAllRealWaves(waveInd int, pathToBaseWaves *string, samplesAmt *int, sam
 	return res
 }
 
-func CheckRsmCompAb(rsmInd resamplerauto.ResamplerT, inRate, outRate int) error {
-	if rsmInd == resamplerauto.ResamplerFFT && outRate > inRate {
+func CheckRsmCompAb(rsmInd goresampler.ResamplerT, inRate, outRate int) error {
+	if rsmInd == goresampler.ResamplerFFtT && outRate > inRate {
 		return ErrUnimplemented
 	}
-	if rsmInd == resamplerauto.ResamplerConstExpr && (inRate == 11025 || inRate == 44100) {
+	if rsmInd == goresampler.ResamplerConstExprT && (inRate == 11025 || inRate == 44100) {
 		return ErrNotExpResampling
 	}
-	if rsmInd != resamplerauto.ResamplerConstExpr && (inRate == 11000 || inRate == 44000) {
+	if rsmInd != goresampler.ResamplerConstExprT && (inRate == 11000 || inRate == 44000) {
 		return ErrNotExpResampling
 	}
 	if inRate == outRate {

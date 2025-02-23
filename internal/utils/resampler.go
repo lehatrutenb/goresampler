@@ -94,3 +94,7 @@ func Merge2Channels[T Numeric](arr1, arr2 []T) []T {
 	}
 	return res
 }
+
+func GetSecondReturnedVal[T any](_, b T) T {
+	return b
+}

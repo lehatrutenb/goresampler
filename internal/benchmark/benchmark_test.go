@@ -8,10 +8,9 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/lehatrutenb/goresampler"
 	testutils "github.com/lehatrutenb/goresampler/internal/test_utils"
 	"github.com/lehatrutenb/goresampler/internal/utils"
-	"github.com/lehatrutenb/goresampler/resamplerauto"
-	"github.com/lehatrutenb/goresampler/resampleri"
 )
 
 var MIN_RESAMPLE_DURATION_S int // min duration of input wave in secs
@@ -26,21 +25,21 @@ var RealWaves map[string]testutils.CutWave
 
 type Benchmarker struct {
 	b       *testing.B
-	rsmT    resamplerauto.ResamplerT
+	rsmT    goresampler.ResamplerT
 	inRate  int
 	outRate int
-	rsm     resampleri.Resampler
+	rsm     goresampler.Resampler
 	wave    testutils.CutWave
 	in      []int16
 }
 
-func (bmr Benchmarker) New(rsmT resamplerauto.ResamplerT, inRate, outRate int, b *testing.B) Benchmarker {
+func (bmr Benchmarker) New(rsmT goresampler.ResamplerT, inRate, outRate int, b *testing.B) Benchmarker {
 	if err := testutils.CheckRsmCompAb(rsmT, inRate, outRate); err != nil {
 		b.Error(err)
 		b.FailNow()
 	}
 
-	rsm, _, err := resamplerauto.New(inRate, outRate, rsmT, nil)
+	rsm, _, err := goresampler.NewResamplerAuto(inRate, outRate, rsmT, nil)
 	if err != nil {
 		b.Error(err)
 		b.FailNow()
@@ -98,7 +97,7 @@ func (bmr Benchmarker) chkErr(err error) {
 	}
 }
 
-func benchResampler(rsmT resamplerauto.ResamplerT, inRate, outRate int, b *testing.B) {
+func benchResampler(rsmT goresampler.ResamplerT, inRate, outRate int, b *testing.B) {
 	bmr := Benchmarker{}.New(rsmT, inRate, outRate, b)
 	bmr.tearDown(bmr.resample(bmr.setup()))
 }

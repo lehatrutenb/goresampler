@@ -11,7 +11,7 @@ import (
 	"github.com/go-audio/wav"
 )
 
-const SAVE_PATH = "../test"
+const SAVE_PATH = "./test"
 const REPORTS_SUFFIX = "reports"
 const AUDIO_SUFFIX = "audio"
 const LARGE_FILES_SUFFIX = "reports_large"
