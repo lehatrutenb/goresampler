@@ -12,7 +12,7 @@ import (
 	"github.com/go-audio/wav"
 )
 
-var PATH_TO_BASE_WAVES = "../base_waves/"
+var PATH_TO_BASE_WAVES = "./base_waves/"
 
 type SinWave struct {
 	leftB        float64
