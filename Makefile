@@ -40,14 +40,20 @@ gitCommitNotRmTestReports:
 
 
 runPlotting:
-	python3 ./internal/test_utils/plots.py  -pib=./test/reports_large -pob=./test/plots -p1="rsm_spline" -p2="rsm_const" -p3="rsm_fft" -p4="rsm_batch" -p5="rsm_auto" --workers-amt=20 # it's written here cause running from go code looks dirty
+	python3 ./internal/test_utils/plots.py  -pib=./test/reports_large -pob=./test/plots -p1="rsm_spline" -p2="rsm_const" -p3="rsm_fft" -p4="rsm_batch" -p5="rsm_auto" --workers-amt=10 # it's written here cause running from go code looks dirty
 
+runPlottingSlow:
+	python3 ./internal/test_utils/plots.py  -pib=./test/reports_large -pob=./test/plots -p1="rsm_spline" -p2="rsm_const" -p3="rsm_fft" -p4="rsm_batch" -p5="rsm_auto" --workers-amt=1
 
 #if want to process later better to use -json, but I don't think I want to
 # care no -a option in first tee to overwrite last testRes
 runTest:
 	-go test -count=1 -benchmem -v ./... | tee ./test/!testRes
 	make runPlotting
+
+runTestSlow:
+	-go test -count=1 -benchmem -v ./... | tee ./test/!testRes
+	make runPlottingSlow
 
 clearReadmeDir:
 	rm -rf ./cmd/out
