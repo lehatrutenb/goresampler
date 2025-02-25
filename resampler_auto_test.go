@@ -103,6 +103,10 @@ func TestResampleAuto_SinWave(t *testing.T) {
 }
 
 func TestResampleAutoDiffErrsNotFall_SinWave(t *testing.T) {
+	if testing.Short() { // TODO timely solution cause of large RAM use
+		t.Skip("skipping test in short mode.")
+	}
+
 	defer func() {
 		if r := recover(); r != nil {
 			t.Error(r)

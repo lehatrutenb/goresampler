@@ -61,7 +61,7 @@ func NewResamplerAuto(inRate, outRate int, rsmT ResamplerT, maxErrRateP *float64
 	}
 
 	var rsm Resampler = nil
-	var ok bool
+	var ok bool = true
 	switch rsmT {
 	case ResamplerSplineT:
 		rsm, ok = NewResamplerSpline(inRate, outRate, maxErrRateP)
