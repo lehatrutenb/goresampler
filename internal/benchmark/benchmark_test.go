@@ -1,3 +1,5 @@
+//go:build !NoBenchmarks
+
 package benchmark
 
 import (
@@ -100,6 +102,12 @@ func (bmr Benchmarker) chkErr(err error) {
 func benchResampler(rsmT goresampler.ResamplerT, inRate, outRate int, b *testing.B) {
 	bmr := Benchmarker{}.New(rsmT, inRate, outRate, b)
 	bmr.tearDown(bmr.resample(bmr.setup()))
+}
+
+func SkipOnShort(b *testing.B) {
+	if testing.Short() {
+		b.Skip("skipping test in short mode.")
+	}
 }
 
 func BenchmarkConstExpr11000_8000(b *testing.B) { benchResampler(1, 11000, 8000, b) }
