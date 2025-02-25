@@ -224,6 +224,10 @@ func TestResampleFFT48To16_SinWave(t *testing.T) {
 }
 
 func TestResampleFFT11025To8(t *testing.T) { // just test that everything counts fine
+	if testing.Short() {
+		t.Skip("skipping test in short mode.")
+	}
+
 	inRate := 11025
 	outRate := 8000
 	waveDurS := float64(60)
@@ -247,6 +251,10 @@ func TestResampleFFT11025To8(t *testing.T) { // just test that everything counts
 }
 
 func TestResampleFFT44100To16(t *testing.T) { // just test that everything counts fine
+	if testing.Short() {
+		t.Skip("skipping test in short mode.")
+	}
+
 	inRate := 48000
 	outRate := 16000
 	waveDurS := float64(60)

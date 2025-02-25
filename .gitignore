@@ -31,3 +31,5 @@ audio_urls
 
 # env file
 .env
+
+!.github/workflows/go.yml

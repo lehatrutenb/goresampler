@@ -18,5 +18,8 @@ jobs:
       with:
         go-version: '1.22.6'
 
+    - name: Set up output dirs
+      run: make clearTestDir
+
     - name: Test
-      run: go test -test.short -v ./...
+      run: go test -test.short -v ./... -bench=^$ -tags 'NoBenchmarks'
