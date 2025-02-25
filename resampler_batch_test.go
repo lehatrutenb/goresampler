@@ -168,6 +168,10 @@ func TestResampleBatch_SinWave2Ch(t *testing.T) {
 }
 
 func TestResampleBatchDiffAddGetTypes_SinWave(t *testing.T) {
+	if testing.Short() { // TODO timely solution cause of large RAM use
+		t.Skip("skipping test in short mode.")
+	}
+
 	inAmt := int(1e5)
 	defer func() {
 		if r := recover(); r != nil {
@@ -199,6 +203,10 @@ func TestResampleBatchDiffAddGetTypes_SinWave(t *testing.T) {
 }
 
 func TestResampleBatchDiffAddAmt_SinWave(t *testing.T) {
+	if testing.Short() { // TODO timely solution cause of large RAM use
+		t.Skip("skipping test in short mode.")
+	}
+
 	inAmt := int(1e5)
 	defer func() {
 		if r := recover(); r != nil {
@@ -233,6 +241,10 @@ func TestResampleBatchDiffAddAmt_SinWave(t *testing.T) {
 }
 
 func TestResampleBatch_RealWave(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping test in short mode.")
+	}
+
 	inAmt := int(5e5)
 	defer func() {
 		if r := recover(); r != nil {
@@ -266,6 +278,10 @@ func TestResampleBatch_RealWave(t *testing.T) {
 }
 
 func TestResampleBatchSaveReports_RealWave(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping test in short mode.")
+	}
+
 	inAmt := int(5e5)
 	defer func() {
 		if r := recover(); r != nil {
