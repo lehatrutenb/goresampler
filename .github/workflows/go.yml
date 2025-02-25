@@ -5,7 +5,7 @@ name: Go
 
 on:
   push:
-    branches: [ "main", "work" ]
+    branches: [ "main", "work", "premain" ]
 
 jobs:
   test:
