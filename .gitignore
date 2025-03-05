@@ -33,3 +33,8 @@ audio_urls
 .env
 
 !.github/workflows/go.yml
+!test/readme_audio/
+!test/!BenchmarkRes
+!test/!testRes
+!test/profile.bat
+!test/profile5e5Samples.pdf
