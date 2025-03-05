@@ -86,9 +86,6 @@ type ResamplerAuto struct {
 // if failed to find such batch to fit maxErrRate,  second arg is false,
 // otherwise true (but even with false, resampler is fine to use)
 func NewResamplerAuto(inRate, outRate int, rsmT ResamplerT, maxErrRateP *float64) (ResamplerAuto, bool, error) {
-	var rsm Resampler = nil
-	var ok bool = true
-
 	if inRate == outRate {
 		return ResamplerAuto{inRate, outRate, NewRsmNotChange()}, true, nil
 	}
