@@ -2,6 +2,7 @@ package goresampler
 
 import (
 	"errors"
+	"slices"
 )
 
 var (
@@ -18,7 +19,10 @@ type ResamplerT int
 const ResamplerConstExprT ResamplerT = 1
 const ResamplerSplineT ResamplerT = 2
 const ResamplerFFtT ResamplerT = 3
-const ResamplerBestFitT ResamplerT = 4
+const ResamplerBestFitT ResamplerT = 4 // tries to use best resampler for given in/out rates by speed
+// ResamplerBestFitNotSafeT is simular to ResamplerBestFitT but if conversation is not base (not {8000, 11000, 11025, 16000, 44000, 44100, 48000}->{8000,16000})
+// Not safe cause other conversations badly tested (or not tested at all)
+const ResamplerBestFitNotSafeT ResamplerT = 5
 
 func (rsmT ResamplerT) String() string {
 	switch rsmT {
@@ -30,6 +34,8 @@ func (rsmT ResamplerT) String() string {
 		return "FFT_resampler"
 	case ResamplerBestFitT:
 		return "BestFit_resampler"
+	case ResamplerBestFitNotSafeT:
+		return "BestFit_notSafe_resampler"
 	default:
 		return "Undefined"
 	}
@@ -86,15 +92,23 @@ type ResamplerAuto struct {
 // if failed to find such batch to fit maxErrRate,  second arg is false,
 // otherwise true (but even with false, resampler is fine to use)
 func NewResamplerAuto(inRate, outRate int, rsmT ResamplerT, maxErrRateP *float64) (ResamplerAuto, bool, error) {
-	var rsm Resampler = nil
-	var ok bool = true
-
 	if inRate == outRate {
 		return ResamplerAuto{inRate, outRate, NewRsmNotChange()}, true, nil
 	}
 
+	if (!slices.Contains([]int{8000, 11025, 16000, 44100, 48000}, inRate) || !slices.Contains([]int{8000, 16000}, outRate)) && rsmT != ResamplerBestFitNotSafeT {
+		if slices.Contains([]int{11000, 44000}, inRate) && slices.Contains([]int{8000, 16000}, outRate) {
+			if rsmT != ResamplerConstExprT {
+				return ResamplerAuto{}, false, ErrUnexpResRate
+			}
+		} else {
+			return ResamplerAuto{}, false, ErrUnexpResRate
+		}
+	}
+
 	var rsm Resampler = nil
 	var ok bool = true
+	sRsmT := rsmT
 	switch rsmT {
 	case ResamplerSplineT:
 		rsm, ok = NewResamplerSpline(inRate, outRate, maxErrRateP)
@@ -103,10 +117,14 @@ func NewResamplerAuto(inRate, outRate int, rsmT ResamplerT, maxErrRateP *float64
 			return ResamplerAuto{}, false, ErrUnexpResRate
 		}
 		rsm, ok = NewResamplerFFT(inRate, outRate, maxErrRateP)
-	case ResamplerBestFitT:
+	case ResamplerBestFitT, ResamplerBestFitNotSafeT:
 		switch inRate {
 		case 11025, 44100:
-			rsm, ok = NewResamplerSpline(inRate, outRate, maxErrRateP)
+			if outRate != 8000 && outRate != 16000 { // to try to set in constExprRsm to not safe
+				rsmT = ResamplerConstExprT
+			} else {
+				rsm, ok = NewResamplerSpline(inRate, outRate, maxErrRateP) // now it means resampling {11025, 44100}->{8000, 16000}
+			}
 		default:
 			rsmT = ResamplerConstExprT
 		}
@@ -123,8 +141,6 @@ func NewResamplerAuto(inRate, outRate int, rsmT ResamplerT, maxErrRateP *float64
 				rsm = NewRsm44To8L()
 			case 48000:
 				rsm = NewRsm48To8L()
-			default:
-				return ResamplerAuto{}, false, ErrUnexpResRate
 			}
 		case 16000:
 			switch inRate {
@@ -136,11 +152,13 @@ func NewResamplerAuto(inRate, outRate int, rsmT ResamplerT, maxErrRateP *float64
 				rsm = NewRsm44To16L()
 			case 48000:
 				rsm = NewRsm48To16L()
-			default:
+			}
+		}
+		if rsm == nil {
+			if sRsmT != ResamplerBestFitNotSafeT { // if can't set resampler with expected conversion and resamplerT is safe
 				return ResamplerAuto{}, false, ErrUnexpResRate
 			}
-		default:
-			return ResamplerAuto{}, false, ErrUnexpResRate
+			rsm, ok = NewResamplerSpline(inRate, outRate, maxErrRateP) // support any conversions + not safe mod is on
 		}
 	}
 
