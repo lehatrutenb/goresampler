@@ -2,6 +2,7 @@ package goresampler
 
 import (
 	"math"
+	"slices"
 
 	"github.com/lehatrutenb/goresampler/internal/resampleutils"
 	"github.com/lehatrutenb/goresampler/internal/utils"
@@ -15,8 +16,12 @@ type borderCond struct {
 	md_0, md_n    float32 // main diag
 }
 
+/*
+resampler that provides resampling via splines
+*/
 type ResamplerSpline struct {
 	in          []float32
+	outF        []float32 // care will have cap eq to max needed during resampler lifetime
 	inRate      int
 	outRate     int
 	bc          borderCond
@@ -122,10 +127,6 @@ func rateToSplineStep(rate int) float64 {
 	return 1 / float64(rate)
 }
 
-func (sw *ResamplerSpline) resample(sp spline, out *[]float32) {
-	*out = sp.calcNewStep(rateToSplineStep(sw.outRate), len(*out))
-}
-
 /*
 try to find batch input amt to have less err (0..1) rate than given
 
@@ -157,6 +158,7 @@ func ResamplerSplineCalcInAmtPerErrRate(maxErr float64, inRate int, outRate int)
 		}
 	}
 
+	bOutAmt = resampleutils.GetOutAmtPerInAmt(inRate, outRate, bInAmt)
 	return bInAmt, bOutAmt, false
 }
 
@@ -174,11 +176,35 @@ func (rsm ResamplerSpline) CalcInOutSamplesPerOutAmt(outAmt int) (int, int) {
 	return in, rsm.calcOutSamplesPerInAmt(in)
 }
 
-func (sw ResamplerSpline) Resample(in, out []int16) error {
+func (sw *ResamplerSpline) preResample(in []int16, outLen int) {
 	sw.in = utils.AS16ToFloat(in)
-	outF := make([]float32, len(out))
-	sw.resample(spline{}.new(sw.in, float32(rateToSplineStep(sw.inRate)), sw.bc), &outF)
-	copy(out, utils.AFloatToS16(outF))
+	sw.outF = slices.Grow(sw.outF, outLen)
+	sw.outF = sw.outF[:outLen]
+}
+
+func (sw *ResamplerSpline) resample(sp spline) {
+	sw.outF = sp.calcNewStep(rateToSplineStep(sw.outRate), len(sw.outF))
+}
+
+func (sw *ResamplerSpline) postResample(out []int16) {
+	copy(out, utils.AFloatToS16(sw.outF))
+}
+
+func (sw *ResamplerSpline) calcSpline() spline {
+	return spline{}.new(sw.in, float32(rateToSplineStep(sw.inRate)), sw.bc)
+}
+
+func (sw ResamplerSpline) Resample(in, out []int16) error {
+	{
+		cIn, cOut := sw.CalcInOutSamplesPerOutAmt(len(out))
+		if cIn != len(in) || cOut != len(out) {
+			return ErrIncorrectInLen
+		}
+	}
+
+	sw.preResample(in, len(out))
+	sw.resample(sw.calcSpline())
+	sw.postResample(out)
 	return nil
 }
 
