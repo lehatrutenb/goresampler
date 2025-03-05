@@ -102,6 +102,50 @@ func TestResampleAuto_SinWave(t *testing.T) {
 	}
 }
 
+func TestResampleAutoNotDefaultConversions_SinWave(t *testing.T) {
+	defer func() {
+		if r := recover(); r != nil {
+			t.Error(r)
+		}
+	}()
+
+	waveDurS := float64(60)
+	rsmT := goresampler.ResamplerBestFitNotSafeT
+	for _, inRate := range []int{12000, 24000, 22050, 32000, 96000} {
+		for _, outRate := range []int{8000, 16000} {
+			if testutils.CheckRsmCompAb(rsmT, inRate, outRate) != nil {
+				continue
+			}
+			log.Printf("Testing %s from %d to %d\n", rsmT.String(), inRate, outRate)
+			rsm := resamplerAutoTest{}.New(inRate, outRate, rsmT, nil)
+			var tObj testutils.TestObj = testutils.TestObj{}.New(testutils.CutWave{}.New(testutils.SinWave{}.New(0, waveDurS, inRate, outRate), 0, rsm.calcNeedSamplesPerOutAmt((int(waveDurS)-30)*outRate)), rsm, 1, t, testutils.TestOpts{}.NewDefault())
+			err := tObj.Run()
+			if !assert.NoError(t, err, fmt.Sprintf("failed to convert via %s from %d to %d", rsmT, inRate, outRate)) {
+				t.Error(err)
+			}
+		}
+	}
+}
+
+func TestResampleAutoNotDefaultConversionsError_SinWave(t *testing.T) {
+	defer func() {
+		if r := recover(); r != nil {
+			t.Error(r)
+		}
+	}()
+
+	for _, rsmT := range []goresampler.ResamplerT{goresampler.ResamplerConstExprT, goresampler.ResamplerSplineT, goresampler.ResamplerFFtT, goresampler.ResamplerBestFitT} {
+		for _, inRate := range []int{12000, 24000, 22050, 32000, 96000} {
+			for _, outRate := range []int{8000, 16000} {
+				_, _, err := goresampler.NewResamplerAuto(inRate, outRate, rsmT, nil)
+				if !assert.Error(t, err, fmt.Sprintf("expected not to create resampler with config %s from %d to %d", rsmT, inRate, outRate)) {
+					t.Error(err)
+				}
+			}
+		}
+	}
+}
+
 func TestResampleAutoDiffErrsNotFall_SinWave(t *testing.T) {
 	if testing.Short() { // TODO timely solution cause of large RAM use
 		t.Skip("skipping test in short mode.")
@@ -135,4 +179,28 @@ func TestResampleAutoDiffErrsNotFall_SinWave(t *testing.T) {
 		}
 	}
 	wg.Wait()
+}
+
+func ExampleResamplerAuto_Resample() {
+	rsm, _, _ := goresampler.NewResamplerAuto(16000, 8000, goresampler.ResamplerBestFitT, nil)
+	inAmt, outAmt := rsm.CalcInOutSamplesPerOutAmt(10)
+	in := make([]int16, inAmt)
+	out := make([]int16, outAmt)
+	for i := 0; i < len(in); i++ {
+		in[i] = int16(i)
+	}
+	rsm.Resample(in, out)
+	// Output:
+}
+
+func ExampleResamplerAuto_Resample_second() {
+	rsm, _, _ := goresampler.NewResamplerAuto(96000, 8000, goresampler.ResamplerBestFitNotSafeT, nil)
+	inAmt, outAmt := rsm.CalcInOutSamplesPerOutAmt(10)
+	in := make([]int16, inAmt)
+	out := make([]int16, outAmt)
+	for i := 0; i < len(in); i++ {
+		in[i] = int16(i)
+	}
+	rsm.Resample(in, out)
+	// Output:
 }
