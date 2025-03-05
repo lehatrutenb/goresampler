@@ -104,7 +104,7 @@ func (rsm ResampleBatchTest) Get(ind int) (int16, error) {
 	return rsm.resampled[ind], nil
 }
 func (rsm ResampleBatchTest) UnresampledUngetInAmt() (int, int) {
-	return rsm.rsm.UnresampledUngetInAmt(-1)
+	return rsm.rsm.UnresampledUngetInAmt()
 }
 
 func TestResampleBatch_SinWave(t *testing.T) {
