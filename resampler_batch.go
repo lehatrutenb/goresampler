@@ -98,6 +98,6 @@ func (rsm *ResampleBatch) GetBatch(out []int16) error {
 // in  []int16 - buffered input wave, not yet resampled
 //
 // out []int16  - buffered output wave, not yet pulled
-func (rsm ResampleBatch) UnresampledUngetInAmt(int) (int, int) {
+func (rsm ResampleBatch) UnresampledUngetInAmt() (int, int) {
 	return len(rsm.in), len(rsm.out)
 }
