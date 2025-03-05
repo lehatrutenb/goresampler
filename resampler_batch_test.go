@@ -104,7 +104,7 @@ func (rsm ResampleBatchTest) Get(ind int) (int16, error) {
 	return rsm.resampled[ind], nil
 }
 func (rsm ResampleBatchTest) UnresampledUngetInAmt() (int, int) {
-	return rsm.rsm.UnresampledUngetInAmt()
+	return rsm.rsm.UnresampledUngetInAmt(-1)
 }
 
 func TestResampleBatch_SinWave(t *testing.T) {
@@ -330,7 +330,7 @@ func ExampleNewResampleBatch() {
 		return
 	}
 
-	_ = rsm
+	_ = goresampler.NewResampleBatch(rsm)
 	fmt.Println("Resampler correctly initialized")
 	// Output: Resampler correctly initialized
 }
@@ -397,6 +397,6 @@ func ExampleResampleBatch_UnresampledUngetInAmt() {
 	resampledWave := make([]int16, 481)
 	rsmBatch.GetBatch(resampledWave)
 
-	fmt.Println(rsmBatch.UnresampledUngetInAmt())
+	fmt.Println(rsmBatch.UnresampledUngetInAmt(-1)) // input doesn't matter - used just to have same api as 2Waves batch resampler
 	// Output: 759 1
 }

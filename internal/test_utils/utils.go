@@ -27,11 +27,25 @@ func CalcMinOutSamplesPerInAmt(inAmt int, rsm goresampler.Resampler) int {
 	return utils.GetSecondReturnedVal(rsm.CalcInOutSamplesPerOutAmt(r))
 }
 
+func CalcMinOutSamplesPerInAmt2Waves(inAmt int, rsm goresampler.Resampler2Waves) (int, int) {
+	l, r := 0, inAmt*2+int(1e6) // cause max multiplier in rsm 8->16 // add 1e6 to go over restrictions
+	for l+1 < r {
+		mid := (l + r) / 2
+		if rsm.CalcNeedSamplesPerOutAmt(mid, mid*2) < inAmt {
+			l = mid
+		} else {
+			r = mid
+		}
+	}
+	_, out1, out2 := rsm.CalcInOutSamplesPerOutAmt(r, r*2)
+	return out1, out2
+}
+
 func calcMinInSamplesAmt(inAmt int, rsm goresampler.Resampler) int {
 	return rsm.CalcNeedSamplesPerOutAmt(CalcMinOutSamplesPerInAmt(inAmt, rsm))
 }
 
-func GetWaveName(rsmT goresampler.ResamplerT, inRate, outRate int) string {
+func GetWaveName[T goresampler.ResamplerTI](rsmT T, inRate, outRate int) string {
 	return fmt.Sprintf("%d:%d:%d", rsmT, inRate, outRate)
 }
 
@@ -90,17 +104,14 @@ func LoadAllRealWaves(waveInd int, pathToBaseWaves *string, samplesAmt *int, sam
 	return res
 }
 
-func CheckRsmCompAb(rsmInd goresampler.ResamplerT, inRate, outRate int) error {
-	if rsmInd == goresampler.ResamplerFFtT && outRate > inRate {
+func CheckRsmCompAb[T goresampler.ResamplerTI](rsmInd T, inRate, outRate int) error {
+	if rsmInd.String() == goresampler.ResamplerFFtT.String() && outRate > inRate {
 		return ErrUnimplemented
 	}
-	if rsmInd == goresampler.ResamplerConstExprT && (inRate == 11025 || inRate == 44100) {
+	if rsmInd.String() == goresampler.ResamplerConstExprT.String() && (inRate == 11025 || inRate == 44100) {
 		return ErrNotExpResampling
 	}
-	if rsmInd != goresampler.ResamplerConstExprT && (inRate == 11000 || inRate == 44000) {
-		return ErrNotExpResampling
-	}
-	if inRate == outRate {
+	if rsmInd.String() != goresampler.ResamplerConstExprT.String() && (inRate == 11000 || inRate == 44000) {
 		return ErrNotExpResampling
 	}
 	return nil
