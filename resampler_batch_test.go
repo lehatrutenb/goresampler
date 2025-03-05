@@ -397,6 +397,6 @@ func ExampleResampleBatch_UnresampledUngetInAmt() {
 	resampledWave := make([]int16, 481)
 	rsmBatch.GetBatch(resampledWave)
 
-	fmt.Println(rsmBatch.UnresampledUngetInAmt(-1)) // input doesn't matter - used just to have same api as 2Waves batch resampler
+	fmt.Println(rsmBatch.UnresampledUngetInAmt()) // input doesn't matter - used just to have same api as 2Waves batch resampler
 	// Output: 759 1
 }
