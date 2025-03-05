@@ -283,10 +283,6 @@ func TestResampleSpline48To16_SinWave(t *testing.T) {
 }
 
 func TestResampleSpline44100To16_RealWave(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping test in short mode.")
-	}
-
 	inRate := 44100
 	outRate := 16000
 	waveDurS := float64(60)
@@ -308,10 +304,6 @@ func TestResampleSpline44100To16_RealWave(t *testing.T) {
 }
 
 func TestResampleSpline44100To8_RealWave(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping test in short mode.")
-	}
-
 	inRate := 44100
 	outRate := 8000
 	waveDurS := float64(60)
@@ -333,10 +325,6 @@ func TestResampleSpline44100To8_RealWave(t *testing.T) {
 }
 
 func TestResampleSpline11025To16_RealWave(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping test in short mode.")
-	}
-
 	inRate := 11025
 	outRate := 16000
 	waveDurS := float64(60)
@@ -357,10 +345,6 @@ func TestResampleSpline11025To16_RealWave(t *testing.T) {
 	}
 }
 func TestResampleSpline11025To8_RealWave(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping test in short mode.")
-	}
-
 	inRate := 11025
 	outRate := 16000
 	waveDurS := float64(60)
