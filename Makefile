@@ -47,11 +47,11 @@ runPlottingSlow:
 
 #if want to process later better to use -json, but I don't think I want to
 # care no -a option in first tee to overwrite last testRes
-runTest:
+runTest: clearTestDir
 	-go test -count=1 -benchmem -v ./... | tee ./test/!testRes
 	make runPlotting
 
-runTestSlow:
+runTestSlow: clearTestDir
 	-go test -count=1 -benchmem -v ./... | tee ./test/!testRes
 	make runPlottingSlow
 
@@ -99,7 +99,7 @@ clearTestDir:
 
 # CALC ONLY 1 CHANNEL IN RESAMPLING TIME
 runBenchmark:
-	go test -bench=. ./internal/benchmark/benchmark_utils.go ./internal/benchmark/benchmark_test.go  -cpuprofile profile.bat -args minsamplesamt=500000 | tee ./test/!BenchmarkRes
+	go test -bench=. ./internal/benchmark/benchmark_utils.go ./internal/benchmark/benchmark_test.go ./internal/benchmark/benchmark_batch_test.go  -cpuprofile profile.bat -args minsamplesamt=500000 | tee ./test/!BenchmarkRes
 	go tool pprof -ignore="(.*tearDown)|(.*setup)|(.*New)|(.*Merge2Channels)" -relative_percentages  -pdf profile.bat > ./test/profile5e5Samples.pdf
 	mv profile.bat ./test/profile.bat
 
