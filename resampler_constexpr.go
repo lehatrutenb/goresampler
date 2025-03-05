@@ -15,13 +15,6 @@ func min(a, b int32) int32 {
 	return b
 }
 
-func max(a, b int32) int32 {
-	if a >= b {
-		return a
-	}
-	return b
-}
-
 func s32ToS16Cut(x int32) int16 {
 	return int16(max(min(x, 32767), -32768))
 }
@@ -1167,5 +1160,27 @@ func (rsm Resampler44To16L) Resample(in []int16, out []int16) error {
 		resample22To8L(in[i:], out[(i*4)/11:], rsm.st1, rsm.tmpMem)
 	}
 
+	return nil
+}
+
+type ResamplerNotChange struct {
+}
+
+func NewRsmNotChange() ResamplerNotChange {
+	return ResamplerNotChange{}
+}
+func (ResamplerNotChange) CalcNeedSamplesPerOutAmt(outAmt int) int {
+	return outAmt
+}
+func (ResamplerNotChange) calcOutSamplesPerInAmt(inAmt int) int {
+	return inAmt
+}
+func (ResamplerNotChange) CalcInOutSamplesPerOutAmt(outAmt int) (int, int) {
+	return outAmt, outAmt
+}
+func (ResamplerNotChange) Reset() {
+}
+func (ResamplerNotChange) Resample(in []int16, out []int16) error {
+	copy(out, in)
 	return nil
 }
