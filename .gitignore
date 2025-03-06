@@ -38,3 +38,4 @@ audio_urls
 !test/!testRes
 !test/profile.bat
 !test/profile5e5Samples.pdf
+!.gitignore

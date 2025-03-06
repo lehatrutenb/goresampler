@@ -5,9 +5,24 @@ name: Go
 
 on:
   push:
-    branches: [ "main", "work", "premain" ]
+    branches: [ "main", "premain", "dev" ]
 
 jobs:
+  check-files:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        large_files: ["test/", "prev_test/", "base_waves/"]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check that large files not exist
+        run: |
+          if [ -f "${{ matrix.large_files }}" ]; then
+            echo "File '${{ matrix.large_files }}' exists!"
+            exit 1
+          fi
+
   test:
     runs-on: ubuntu-latest
     steps:

@@ -181,7 +181,7 @@ func TestResampleAutoDiffErrsNotFall_SinWave(t *testing.T) {
 	wg.Wait()
 }
 
-func ExampleResamplerAuto_Resample() {
+func ExampleResamplerAuto() {
 	rsm, _, _ := goresampler.NewResamplerAuto(16000, 8000, goresampler.ResamplerBestFitT, nil)
 	inAmt, outAmt := rsm.CalcInOutSamplesPerOutAmt(10)
 	in := make([]int16, inAmt)
@@ -193,7 +193,7 @@ func ExampleResamplerAuto_Resample() {
 	// Output:
 }
 
-func ExampleResamplerAuto_Resample_second() {
+func ExampleResamplerAuto_second() {
 	rsm, _, _ := goresampler.NewResamplerAuto(96000, 8000, goresampler.ResamplerBestFitNotSafeT, nil)
 	inAmt, outAmt := rsm.CalcInOutSamplesPerOutAmt(10)
 	in := make([]int16, inAmt)
