@@ -126,3 +126,12 @@ addBaseWave:
 		ffmpeg -i $$path -ar 44000 ./base_waves/base4/base4_44000.wav ; \
 		ffmpeg -i $$path -ar 44100 ./base_waves/base4/base4_44100.wav ; \
 		ffmpeg -i $$path -ar 48000 ./base_waves/base4/base4_48000.wav
+
+checkWorkflow:
+	act
+
+runDocs:
+	xdg-open "http://localhost:8080/"
+	$$GOPATH/bin/pkgsite
+
+preCommit: checkWorkflow runDocs
