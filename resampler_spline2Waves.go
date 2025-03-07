@@ -35,14 +35,7 @@ func (rsm ResamplerSpline2Waves) CalcInOutSamplesPerOutAmt(outAmt1, outAmt2 int)
 	return in, rsm.rsm1.calcOutSamplesPerInAmt(in), rsm.rsm2.calcOutSamplesPerInAmt(in)
 }
 
-func (sw ResamplerSpline2Waves) Resample(in, out1, out2 []int16) error {
-	{
-		cIn, cOut1, cOut2 := sw.CalcInOutSamplesPerOutAmt(len(out1), len(out2))
-		if cIn != len(in) || cOut1 != len(out1) || cOut2 != len(out2) {
-			return ErrIncorrectInLen
-		}
-	}
-
+func (sw ResamplerSpline2Waves) ResampleAll(in, out1, out2 []int16) error {
 	sw.rsm1.preResample(in, len(out1))
 	sw.rsm2.preResample(in, len(out2))
 	spl := sw.rsm1.calcSpline()
@@ -51,6 +44,17 @@ func (sw ResamplerSpline2Waves) Resample(in, out1, out2 []int16) error {
 	sw.rsm1.postResample(out1)
 	sw.rsm2.postResample(out2)
 	return nil
+}
+
+func (sw ResamplerSpline2Waves) Resample(in, out1, out2 []int16) error {
+	{
+		cIn, cOut1, cOut2 := sw.CalcInOutSamplesPerOutAmt(len(out1), len(out2))
+		if cIn != len(in) || cOut1 != len(out1) || cOut2 != len(out2) {
+			return ErrIncorrectInLen
+		}
+	}
+
+	return sw.ResampleAll(in, out1, out2)
 }
 
 func (rsm ResamplerSpline2Waves) Reset() { // TODO logically should be empty but not tested
