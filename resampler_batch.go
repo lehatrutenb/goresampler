@@ -14,13 +14,15 @@ var (
 
 // ResampleBatch provides resampling within push (GetBatch/GetLargeBatch) and pull (AddBatch)
 type ResampleBatch struct {
-	in  []int16   // buffered input wave, not yet resampled
-	out []int16   // buffered output wave, not yet pulled
-	rsm Resampler // resampler that will resample
+	in       []int16   // buffered input wave, not yet resampled
+	out      []int16   // buffered output wave, not yet pulled
+	rsm      Resampler // resampler that will resample
+	rsmTails ResamplerSpline
 }
 
-func NewResampleBatch(rsm Resampler) ResampleBatch {
-	return ResampleBatch{make([]int16, 0), make([]int16, 0), rsm}
+func NewResampleBatch(rsm Resampler, inRate, outRate int) ResampleBatch {
+	rsmTails, _ := NewResamplerSpline(inRate, outRate, nil)
+	return ResampleBatch{make([]int16, 0), make([]int16, 0), rsm, rsmTails}
 }
 
 // AddBatch appends given in (input wave) to in buffer
@@ -49,7 +51,9 @@ func (rsm *ResampleBatch) resampleMore(minRsmAmt int) error {
 
 	curOutLen := len(rsm.out)
 	rsm.out = slices.Grow(rsm.out, outAmt)[:len(rsm.out)+outAmt]
-	rsm.rsm.Resample(rsm.in[:inAmt], rsm.out[curOutLen:curOutLen+outAmt])
+	if err := rsm.rsm.Resample(rsm.in[:inAmt], rsm.out[curOutLen:curOutLen+outAmt]); err != nil {
+		return err
+	}
 	rsm.in = rsm.in[inAmt:]
 	return nil
 }
@@ -100,4 +104,25 @@ func (rsm *ResampleBatch) GetBatch(out []int16) error {
 // out []int16  - buffered output wave, not yet pulled
 func (rsm ResampleBatch) UnresampledUngetInAmt() (int, int) {
 	return len(rsm.in), len(rsm.out)
+}
+
+// Len return size of out buffer (resampled ones)
+func (rsm *ResampleBatch) Len() int {
+	return len(rsm.out)
+}
+
+// ResampleAllInBuf resamples all data in input buffer
+// after it in buffer is clear
+//
+// to get resampled samples - use GetBatch and len(ResampleBatch)
+func (rsm *ResampleBatch) ResampleAllInBuf() error {
+	curOutLen := len(rsm.out)
+	inAmt := len(rsm.in)
+	outAmt := rsm.rsmTails.calcOutSamplesPerInAmt(inAmt)
+	rsm.out = slices.Grow(rsm.out, outAmt)[:len(rsm.out)+outAmt]
+	if err := rsm.rsmTails.ResampleAll(rsm.in[:inAmt], rsm.out[curOutLen:curOutLen+outAmt]); err != nil {
+		return err
+	}
+	rsm.in = rsm.in[inAmt:]
+	return nil
 }

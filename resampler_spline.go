@@ -168,7 +168,7 @@ func (sw ResamplerSpline) CalcNeedSamplesPerOutAmt(outAmt int) int {
 
 // not really need so strict - like inAmt % sw.batchInAmt == 0 , but it's garanted
 func (sw ResamplerSpline) calcOutSamplesPerInAmt(inAmt int) int {
-	return (inAmt / sw.batchInAmt) * sw.batchOutAmt
+	return (inAmt * sw.batchOutAmt) / sw.batchInAmt
 }
 
 func (rsm ResamplerSpline) CalcInOutSamplesPerOutAmt(outAmt int) (int, int) {
@@ -194,6 +194,13 @@ func (sw *ResamplerSpline) calcSpline() spline {
 	return spline{}.new(sw.in, float32(rateToSplineStep(sw.inRate)), sw.bc)
 }
 
+func (sw ResamplerSpline) ResampleAll(in, out []int16) error {
+	sw.preResample(in, len(out))
+	sw.resample(sw.calcSpline())
+	sw.postResample(out)
+	return nil
+}
+
 func (sw ResamplerSpline) Resample(in, out []int16) error {
 	{
 		cIn, cOut := sw.CalcInOutSamplesPerOutAmt(len(out))
@@ -202,10 +209,7 @@ func (sw ResamplerSpline) Resample(in, out []int16) error {
 		}
 	}
 
-	sw.preResample(in, len(out))
-	sw.resample(sw.calcSpline())
-	sw.postResample(out)
-	return nil
+	return sw.ResampleAll(in, out)
 }
 
 func (rsm ResamplerSpline) Reset() { // TODO logically should be empty but not tested

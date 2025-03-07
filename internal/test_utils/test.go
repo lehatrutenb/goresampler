@@ -308,6 +308,7 @@ func (tObj *TestObj) Run() error {
 	if tObj.opts.failOnHighDurErr && math.Abs(float64(tCorr-tGot)) >= float64(tCorr)*maxDurationErr { // if got just math error in time of resampled
 		tCorrSec := float64(tObj.Tw.InLen()) / float64(tObj.Tw.InRate())
 		tGotSec := float64(len(tObj.Tres.Resampeled))/float64(tObj.Tres.OutRate) + float64(unresampledIn)/float64(tObj.Tw.InRate()) + float64(ungetOut)/float64(tObj.Tw.OutRate())
+		tObj.t.Logf("%d -> %d", tObj.Tres.InRate, tObj.Tres.OutRate)
 		tObj.t.Logf("too large time difference: correct:%f got:%f", tCorrSec, tGotSec) // yes, cmp other values, print these
 		tObj.t.Fail()
 	}
