@@ -44,7 +44,7 @@ func (bmr BenchmarkerBatch) New(rsmT goresampler.Resampler2WavesT, inRate, outRa
 		b.FailNow()
 	}
 
-	rsmBatch := goresampler.NewResampleBatch2Waves(rsm)
+	rsmBatch := goresampler.NewResampleBatch2Waves(rsm, inRate, outRate1, outRate2)
 
 	rsmInsT, err := rsmT.GetRsmIns()
 	if err != nil {

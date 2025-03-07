@@ -6,14 +6,16 @@ import (
 
 // ResampleBatch2Waves provides resampling within push (GetBatch/GetLargeBatch) and pull (AddBatch) from input to 2 waves with their own rates
 type ResampleBatch2Waves struct {
-	in   []int16         // buffered input wave, not yet resampled
-	out1 []int16         // buffered first output wave, not yet pulled
-	out2 []int16         // buffered secound output wave, not yet pulled
-	rsm  Resampler2Waves // resampler that will resample
+	in       []int16         // buffered input wave, not yet resampled
+	out1     []int16         // buffered first output wave, not yet pulled
+	out2     []int16         // buffered secound output wave, not yet pulled
+	rsm      Resampler2Waves // resampler that will resample
+	rsmTails ResamplerSpline2Waves
 }
 
-func NewResampleBatch2Waves(rsm Resampler2Waves) ResampleBatch2Waves {
-	return ResampleBatch2Waves{make([]int16, 0), make([]int16, 0), make([]int16, 0), rsm}
+func NewResampleBatch2Waves(rsm Resampler2Waves, inRate, outRate1, outRate2 int) ResampleBatch2Waves {
+	rsmTails, _ := NewResamplerSpline2Waves(inRate, outRate1, outRate2, nil)
+	return ResampleBatch2Waves{make([]int16, 0), make([]int16, 0), make([]int16, 0), rsm, rsmTails}
 }
 
 // AddBatch appends given in (input wave) to in buffer
@@ -112,14 +114,31 @@ func (rsm *ResampleBatch2Waves) GetBatchSecondWave(out []int16) error {
 }
 
 // UnresampledUngetInAmt returns len of input and output buffers of ResampleBatch
-// outWaveInd - which output len to take (1 or 2 wave)
 //
 // in  []int16 - buffered input wave, not yet resampled
 //
 // out []int16  - buffered output wave, not yet pulled
-func (rsm ResampleBatch2Waves) UnresampledUngetInAmt(outWaveInd int) (int, int) {
-	if outWaveInd == 1 {
-		return len(rsm.in), len(rsm.out1)
-	}
-	return len(rsm.in), len(rsm.out2)
+func (rsm ResampleBatch2Waves) UnresampledUngetInAmt() (int, int, int) {
+	return len(rsm.in), len(rsm.out1), len(rsm.out2)
+}
+
+// Len return size of out buffer (resampled ones)
+func (rsm *ResampleBatch2Waves) Len() (int, int) {
+	return len(rsm.out1), len(rsm.out2)
+}
+
+// ResampleAllInBuf resamples all data in input buffer
+// after it in buffer is clear
+//
+// to get resampled samples - use GetBatch and len(ResampleBatch)
+func (rsm *ResampleBatch2Waves) ResampleAllInBuf() error {
+	inAmt := len(rsm.in)
+	outAmt1, outAmt2 := rsm.rsmTails.calcOutSamplesPerInAmt(inAmt)
+	curOutLen1 := len(rsm.out1)
+	curOutLen2 := len(rsm.out2)
+	rsm.out1 = slices.Grow(rsm.out1, outAmt1)[:len(rsm.out1)+outAmt1]
+	rsm.out2 = slices.Grow(rsm.out2, outAmt2)[:len(rsm.out2)+outAmt2] // not want to use loop there 1. slower 2. not really makes code prettier
+	rsm.rsmTails.ResampleAll(rsm.in[:inAmt], rsm.out1[curOutLen1:curOutLen1+outAmt1], rsm.out2[curOutLen2:curOutLen2+outAmt2])
+	rsm.in = rsm.in[inAmt:]
+	return nil
 }
