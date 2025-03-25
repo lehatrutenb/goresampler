@@ -205,13 +205,6 @@ func (sw ResamplerSpline) ResampleAll(in, out []int16) error {
 	return nil
 }
 
-func (sw ResamplerSpline) ResampleAll(in, out []int16) error {
-	sw.preResample(in, len(out))
-	sw.resample(sw.calcSpline())
-	sw.postResample(out)
-	return nil
-}
-
 func (sw ResamplerSpline) Resample(in, out []int16) error {
 	{
 		cIn, cOut := sw.CalcInOutSamplesPerOutAmt(len(out))
