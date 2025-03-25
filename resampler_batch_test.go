@@ -570,4 +570,5 @@ func ExampleResampleBatch_ResampleAllInBuf() {
 
 	fmt.Println(rsmBatch.UnresampledUngetInAmt())
 	// Output: 759 1
+	// 0 1519
 }
