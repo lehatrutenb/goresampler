@@ -58,5 +58,6 @@ func (sw ResamplerSpline2Waves) Resample(in, out1, out2 []int16) error {
 }
 
 func (rsm ResamplerSpline2Waves) Reset() { // TODO logically should be empty but not tested
-	panic("UNIMPLEMENTED")
+	rsm.rsm1.Reset()
+	rsm.rsm2.Reset()
 }

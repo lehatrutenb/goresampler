@@ -15,10 +15,10 @@ import (
 	"github.com/nao1215/markdown"
 )
 
-const PATH_TO_AUDO_URLS = "./internal/benchmark/audio_urls"
+const PATH_TO_AUDIO_URLS = "./internal/benchmark/audio_urls"
 
 func CreateReadmeAudioTable() error {
-	data, err := os.ReadFile(PATH_TO_AUDO_URLS)
+	data, err := os.ReadFile(PATH_TO_AUDIO_URLS)
 	if err != nil {
 		return err
 	}
@@ -28,7 +28,7 @@ func CreateReadmeAudioTable() error {
 	for _, rsmT := range []goresampler.ResamplerT{goresampler.ResamplerConstExprT, goresampler.ResamplerSplineT, goresampler.ResamplerFFtT} {
 		for _, outRate := range []int{8000, 16000} {
 			for _, inRate := range []int{8000, 11000, 11025, 16000, 44000, 44100, 48000} {
-				if testutils.CheckRsmCompAb(rsmT, inRate, outRate) != nil {
+				if testutils.CheckRsmCompAb(rsmT, inRate, outRate) != nil || inRate == outRate {
 					continue
 				}
 				order = append(order, [3]int{int(rsmT) - 1, inRateConv[inRate], outRateConv[outRate]})
@@ -61,6 +61,7 @@ func CreateReadmeAudioTable() error {
 		if row >= 7 {
 			row--
 		}
+
 		urls[row][i+1] = elPref + url + elSuff
 
 		if k == 0 {
