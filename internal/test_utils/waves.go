@@ -215,66 +215,66 @@ func (CutWave) New(w TestWave, prefCut int, cutAmt int) TestWave {
 
 func (CutWave) Seed(int) {}
 
-func (rw CutWave) InLen() int {
-	return rw.cutAmt * rw.tw.NumChannels()
+func (cw CutWave) InLen() int {
+	return cw.cutAmt * cw.tw.NumChannels()
 }
 
-func (rw CutWave) OutLen() int {
-	return int(math.Floor(float64(rw.InLen()) * float64(rw.tw.OutRate()) / float64(rw.tw.InRate())))
+func (cw CutWave) OutLen() int {
+	return int(math.Floor(float64(cw.InLen()) * float64(cw.tw.OutRate()) / float64(cw.tw.InRate())))
 }
 
-func (rw CutWave) InRate() int {
-	return rw.tw.InRate()
+func (cw CutWave) InRate() int {
+	return cw.tw.InRate()
 }
 
-func (rw CutWave) OutRate() int {
-	return rw.tw.OutRate()
+func (cw CutWave) OutRate() int {
+	return cw.tw.OutRate()
 }
 
-func (rw CutWave) NumChannels() int {
-	return rw.tw.NumChannels()
+func (cw CutWave) NumChannels() int {
+	return cw.tw.NumChannels()
 }
 
-func (rw CutWave) WithResampled() bool {
-	return rw.tw.WithResampled()
+func (cw CutWave) WithResampled() bool {
+	return cw.tw.WithResampled()
 }
 
-func (rw CutWave) GetIn(ind int) (int16, error) {
-	pref := rw.prefCut * rw.tw.NumChannels()
-	if ind >= rw.InLen() {
+func (cw CutWave) GetIn(ind int) (int16, error) {
+	pref := cw.prefCut * cw.tw.NumChannels()
+	if ind >= cw.InLen() {
 		return 0, errors.New("out of bounds")
 	}
 
-	return rw.tw.GetIn(pref + ind)
+	return cw.tw.GetIn(pref + ind)
 }
 
-func (rw CutWave) GetOut(ind int) (int16, error) {
-	pref := int(math.Round(float64(rw.prefCut*rw.tw.NumChannels()) * float64(rw.tw.OutRate()) / float64(rw.tw.InRate())))
-	if ind >= rw.OutLen() {
+func (cw CutWave) GetOut(ind int) (int16, error) {
+	pref := int(math.Round(float64(cw.prefCut*cw.tw.NumChannels()) * float64(cw.tw.OutRate()) / float64(cw.tw.InRate())))
+	if ind >= cw.OutLen() {
 		return 0, errors.New("out of bounds")
 	}
 
-	return rw.tw.GetOut(pref + ind)
+	return cw.tw.GetOut(pref + ind)
 }
 
-func (rw CutWave) String() string {
-	return fmt.Sprintf("CutWave:%s_[%d:%d]", rw.tw.String(), rw.prefCut, rw.prefCut+rw.cutAmt)
+func (cw CutWave) String() string {
+	return fmt.Sprintf("CutWave:%s_[%d:%d]", cw.tw.String(), cw.prefCut, cw.prefCut+cw.cutAmt)
 }
 
-func (rw CutWave) GetFullInWave() (res []int16, err error) {
-	res = make([]int16, rw.InLen())
+func GetFullInWave(tw TestWave) (res []int16, err error) {
+	res = make([]int16, tw.InLen())
 	for i := 0; i < len(res); i++ {
-		if res[i], err = rw.GetIn(i); err != nil {
+		if res[i], err = tw.GetIn(i); err != nil {
 			return nil, err
 		}
 	}
 	return res, nil
 }
 
-func (rw CutWave) GetFullOutWave() (res []int16, err error) {
-	res = make([]int16, rw.OutLen())
+func GetFullOutWave(tw TestWave) (res []int16, err error) {
+	res = make([]int16, tw.OutLen())
 	for i := 0; i < len(res); i++ {
-		if res[i], err = rw.GetOut(i); err != nil {
+		if res[i], err = tw.GetOut(i); err != nil {
 			return nil, err
 		}
 	}

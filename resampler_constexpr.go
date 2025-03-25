@@ -97,6 +97,9 @@ func (rsm *Resampler16To8L) initStateResample16To8L() {
 }
 
 func (rsm Resampler16To8L) Reset() {
+	if rsm.st1 == nil {
+		return
+	}
 	for i := 0; i < len(rsm.st1); i++ {
 		rsm.st1[i] = 0
 	}
@@ -192,6 +195,9 @@ func (rsm *Resampler8To16L) initStateResample8To16L() {
 }
 
 func (rsm Resampler8To16L) Reset() {
+	if rsm.st1 == nil {
+		return
+	}
 	for i := 0; i < len(rsm.st1); i++ {
 		rsm.st1[i] = 0
 	}
@@ -467,7 +473,7 @@ func downBy2IntToShortL(in []int32, inLen int, out []int16, fSt []int32) {
 	// combine allpass outputs
 	for i = 0; i < inLen; i += 2 {
 		// divide by two, add both allpass outputs and round
-		tmp0 = (in[i<<1] + in[(i<<1)+1]) >> 15
+		/*tmp0 = (in[i<<1] + in[(i<<1)+1]) >> 15
 		tmp1 = (in[(i<<1)+2] + in[(i<<1)+3]) >> 15
 		if tmp0 > 32767 { // 0x00007FFF
 			tmp0 = 32767
@@ -482,7 +488,9 @@ func downBy2IntToShortL(in []int32, inLen int, out []int16, fSt []int32) {
 		if tmp1 < -32768 { // 0xFFFF8000
 			tmp1 = -32768
 		}
-		out[i+1] = int16(tmp1) // TODO looks like need to s32ToS16Cut
+		out[i+1] = int16(tmp1) // TODO looks like need to s32ToS16Cut*/
+		out[i] = s32ToS16Cut((in[i<<1] + in[(i<<1)+1]) >> 15)
+		out[i+1] = s32ToS16Cut((in[(i<<1)+2] + in[(i<<1)+3]) >> 15)
 	}
 }
 
@@ -816,6 +824,9 @@ func (rsm *Resampler48To8L) initStateResample48To8L() {
 }
 
 func (rsm Resampler48To8L) Reset() {
+	if rsm.st2 == nil {
+		return
+	}
 	for i := 0; i < 8; i++ {
 		rsm.st1.S_48_32[i] = 0
 		rsm.st1.S_32_16[i] = 0
@@ -824,7 +835,7 @@ func (rsm Resampler48To8L) Reset() {
 	for i := 0; i < 16; i++ {
 		rsm.st1.S_48_48[i] = 0
 	}
-	for i := 0; i < 496; i++ {
+	for i := 0; i < len(rsm.tmpMem); i++ {
 		rsm.tmpMem[i] = 0
 	}
 	for i := 0; i < len(rsm.tmp); i++ {
@@ -880,6 +891,9 @@ func (rsm *Resampler48To16L) initStateResample48To16L() {
 }
 
 func (rsm Resampler48To16L) Reset() {
+	if rsm.st1.S_32_16 == nil {
+		return
+	}
 	for i := 0; i < 8; i++ {
 		rsm.st1.S_48_32[i] = 0
 		rsm.st1.S_32_16[i] = 0
@@ -887,7 +901,7 @@ func (rsm Resampler48To16L) Reset() {
 	for i := 0; i < 16; i++ {
 		rsm.st1.S_48_48[i] = 0
 	}
-	for i := 0; i < 496; i++ {
+	for i := 0; i < len(rsm.tmpMem); i++ {
 		rsm.tmpMem[i] = 0
 	}
 }
@@ -937,12 +951,15 @@ func (rsm *Resampler11To8L) initStateResample11To8L() {
 }
 
 func (rsm Resampler11To8L) Reset() {
+	if rsm.st1.S_32_16 == nil {
+		return
+	}
 	for i := 0; i < 8; i++ {
 		rsm.st1.S_22_44[i] = 0
 		rsm.st1.S_44_32[i] = 0
 		rsm.st1.S_32_16[i] = 0
 	}
-	for i := 0; i < 104; i++ {
+	for i := 0; i < len(rsm.tmpMem); i++ {
 		rsm.tmpMem[i] = 0
 	}
 }
@@ -995,13 +1012,16 @@ func (rsm *Resampler11To16L) initStateResample11To16L() {
 }
 
 func (rsm Resampler11To16L) Reset() {
+	if rsm.st2.S_32_16 == nil {
+		return
+	}
 	for i := 0; i < 8; i++ {
 		rsm.st1[i] = 0
 		rsm.st2.S_22_44[i] = 0
 		rsm.st2.S_44_32[i] = 0
 		rsm.st2.S_32_16[i] = 0
 	}
-	for i := 0; i < 104; i++ {
+	for i := 0; i < len(rsm.tmpMem); i++ {
 		rsm.tmpMem[i] = 0
 	}
 	for i := 0; i < len(rsm.tmp); i++ {
@@ -1060,6 +1080,9 @@ func (rsm *Resampler44To8L) initStateResample44To8L() {
 }
 
 func (rsm Resampler44To8L) Reset() {
+	if rsm.st1.S_16_8 == nil {
+		return
+	}
 	for i := 0; i < 16; i++ {
 		rsm.st1.S_22_22[i] = 0
 	}
@@ -1068,7 +1091,7 @@ func (rsm Resampler44To8L) Reset() {
 		rsm.st1.S_22_16[i] = 0
 		rsm.st1.S_16_8[i] = 0
 	}
-	for i := 0; i < 126; i++ {
+	for i := 0; i < len(rsm.tmpMem); i++ {
 		rsm.tmpMem[i] = 0
 	}
 	for i := 0; i < len(rsm.tmp); i++ {
@@ -1124,6 +1147,9 @@ func (rsm *Resampler44To16L) initStateResample44To16L() {
 }
 
 func (rsm Resampler44To16L) Reset() {
+	if rsm.st1.S_16_8 == nil {
+		return
+	}
 	for i := 0; i < 16; i++ {
 		rsm.st1.S_22_22[i] = 0
 	}
@@ -1131,7 +1157,7 @@ func (rsm Resampler44To16L) Reset() {
 		rsm.st1.S_22_16[i] = 0
 		rsm.st1.S_16_8[i] = 0
 	}
-	for i := 0; i < 126; i++ {
+	for i := 0; i < len(rsm.tmpMem); i++ {
 		rsm.tmpMem[i] = 0
 	}
 }
