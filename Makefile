@@ -56,11 +56,9 @@ runTestSlow: clearTestDir
 	make runPlottingSlow
 
 clearReadmeDir:
-	rm -rf ./cmd/out
-	mkdir cmd/out
-
-createReadmeAudioTable:
-	go run cmd/main.go ./cmd/audio_urls
+	rm -rf test/readme_audio
+	mkdir test/readme_audio
+	mkdir test/readme_audio/listenable
 
 clearTestDir:
 	rm -rf ./test
@@ -127,7 +125,12 @@ addBaseWave:
 		ffmpeg -i $$path -ar 44100 ./base_waves/base4/base4_44100.wav ; \
 		ffmpeg -i $$path -ar 48000 ./base_waves/base4/base4_48000.wav
 
+# just run tests from it
+preCheckWorkFlow:
+	go test -test.short -v ./... -bench=^$ -tags 'NoBenchmarks'
+
 checkWorkflow:
+	$(eval include .env)
 	act
 
 runDocs:

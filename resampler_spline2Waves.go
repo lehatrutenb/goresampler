@@ -13,6 +13,7 @@ if you use New with last arg maxErrRateP=nil - ignore ok value if err doesn't ma
 try to find batch input amt to have less err (0..1) rate than given maxErrRateP
 if failed to find such batch to fit maxErrRate,  second arg is false, otherwise true (but even with false, resampler is fine to use)
 */
+
 func NewResamplerSpline2Waves(inRate, outRate1, outRate2 int, maxErrRateP *float64) (ResamplerSpline2Waves, bool) {
 	rsm1, ok1 := NewResamplerSpline(inRate, outRate1, maxErrRateP)
 	rsm2, ok2 := NewResamplerSpline(inRate, outRate2, maxErrRateP)
@@ -57,6 +58,7 @@ func (sw ResamplerSpline2Waves) Resample(in, out1, out2 []int16) error {
 	return sw.ResampleAll(in, out1, out2)
 }
 
-func (rsm ResamplerSpline2Waves) Reset() { // TODO logically should be empty but not tested
-	panic("UNIMPLEMENTED")
+func (rsm ResamplerSpline2Waves) Reset() {
+	rsm.rsm1.Reset()
+	rsm.rsm2.Reset()
 }
