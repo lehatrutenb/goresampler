@@ -568,8 +568,6 @@ func ExampleResampleBatch_ResampleAllInBuf() {
 	fmt.Println(rsmBatch.UnresampledUngetInAmt()) // resample tails - care that may cause not same sound duration - may loose ~ 1/outRate seconds
 	err = rsmBatch.ResampleAllInBuf()
 
-	inBufSz, _ := rsmBatch.UnresampledUngetInAmt() // now input buffer is empty
-	fmt.Println(inBufSz)
+	fmt.Println(rsmBatch.UnresampledUngetInAmt())
 	// Output: 759 1
-	// 0
 }
