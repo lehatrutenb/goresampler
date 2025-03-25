@@ -86,7 +86,7 @@ func TestResampleFFTDiffErrsNotFall_SinWave(t *testing.T) {
 				if rsm.calcNeedSamplesPerOutAmt((int(waveDurS)-5)*outRate)-5 >= int(waveDurS)*inRate {
 					continue
 				}
-				opts := testutils.TestOpts{}.NewDefault().NotFailOnHighDurationErr().NotCalcDuration().WithWaitGroup(wg)
+				opts := testutils.TestOpts{}.NewDefault().NotCalcDuration().WithWaitGroup(wg).NotFailOnHighDurationErr()
 				var tObj testutils.TestObj = testutils.TestObj{}.New(testutils.CutWave{}.New(testutils.SinWave{}.New(0, waveDurS, inRate, outRate), 0, rsm.calcNeedSamplesPerOutAmt((int(waveDurS)-5)*outRate)), &rsm, 1, t, opts)
 				wg.Add(1)
 				go tObj.Run()
@@ -238,7 +238,7 @@ func TestResampleFFT11025To8(t *testing.T) { // just test that everything counts
 	}()
 	rsm := resamplerFFT{}.New(inRate, outRate, nil)
 
-	var tObj testutils.TestObj = testutils.TestObj{}.New(testutils.CutWave{}.New(testutils.RealWave{}.New(0, inRate, &outRate, nil), 0, rsm.calcNeedSamplesPerOutAmt((int(waveDurS)-30)*outRate)), &rsm, 1, t, testutils.TestOpts{}.NewDefault())
+	var tObj testutils.TestObj = testutils.TestObj{}.New(testutils.CutWave{}.New(testutils.RealWave{}.New(0, inRate, &outRate, nil), 0, rsm.calcNeedSamplesPerOutAmt((int(waveDurS)-30)*outRate)), &rsm, 1, t, testutils.TestOpts{}.NewDefault().NotFailOnHighErr())
 	err := tObj.Run()
 	if !assert.NoError(t, err, "failed to run resampler") {
 		t.Error(err)

@@ -157,12 +157,20 @@ func (TestOpts) New(toCrSoundF bool, outPlotPath *string) *TestOpts { // TODO UN
 	return res
 }
 
+func (to *TestOpts) checkAvoidErrAreLast() {
+	if !to.failOnHighErr || !to.failOnHighDurErr {
+		panic("Not set erros avoiding in the middle")
+	}
+}
+
 func (to *TestOpts) WithPlotPath(outPlotPath string) *TestOpts {
+	to.checkAvoidErrAreLast()
 	to.OutPlotPath = outPlotPath
 	return to
 }
 
 func (to *TestOpts) WithCrSF(toCrSF bool) *TestOpts {
+	to.checkAvoidErrAreLast()
 	to.ToCrSF = toCrSF
 	return to
 }
@@ -178,16 +186,19 @@ func (to *TestOpts) NotFailOnHighDurationErr() *TestOpts {
 }
 
 func (to *TestOpts) NotCalcDuration() *TestOpts {
+	to.checkAvoidErrAreLast()
 	to.CalcDuration = true
 	return to
 }
 
 func (to *TestOpts) WithWaitGroup(wg *sync.WaitGroup) *TestOpts {
+	to.checkAvoidErrAreLast()
 	to.wg = wg
 	return to
 }
 
 func (to *TestOpts) SetSFName(name string) *TestOpts {
+	to.checkAvoidErrAreLast()
 	to.SFName = name
 	return to
 }
