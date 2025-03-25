@@ -49,16 +49,21 @@ func NewResamplerSpline(inRate, outRate int, maxErrRateP *float64) (ResamplerSpl
 type spline struct {
 	ys   []float32 // f(x) in givens xs
 	yds  []float32 // f(x)' in given xs
-	step float32   // xs are 0, step, 2*step, ...
+	step float64   // xs are 0, 1/step, 1/(2*step), ...
+}
+
+func bool2sfloat(b bool) float64 {
+	var i int
+	if b {
+		i = 1
+	} else {
+		i = 0
+	}
+	return (1-float64(i))*2 - 1
 }
 
 // have Mx=D where M - three diag A B C where A = [x1] * len(A), C = [x2] * len(C), B = [x3] * len(B)
 func solveMatrixEqSimpleDiags(a float32, b float32, c float32, ds []float32, bc borderCond) []float32 {
-	/*
-	   TODO work with possible divide by 0 - return err as result or better another solution?
-	   TODO speed up
-	*/
-
 	sz := len(ds) // everywhere size is same so lets make var for it
 	xs := make([]float32, sz)
 	alphs := make([]float32, sz)
@@ -68,7 +73,8 @@ func solveMatrixEqSimpleDiags(a float32, b float32, c float32, ds []float32, bc 
 	alphs[1] = -bc.mu_0 / bc.md_0
 	betths[1] = bc.c_0 / bc.md_0
 	for ind := 1; ind+1 < sz; ind++ {
-		nx := a*alphs[ind] + b
+		cur := float64(a*alphs[ind] + b)
+		nx := float32(max(math.Abs(cur), 1e-5) * bool2sfloat(math.Signbit(cur))) // protect from zero div
 		alphs[ind+1] = -c / nx
 		betths[ind+1] = (ds[ind] - a*betths[ind]) / nx
 	}
@@ -81,18 +87,16 @@ func solveMatrixEqSimpleDiags(a float32, b float32, c float32, ds []float32, bc 
 	return xs
 }
 
-func (spline) new(ys []float32, step float32, bc borderCond) spline {
-	// TODO check to make step int
-
+func (spline) new(ys []float32, step float64, bc borderCond) spline {
 	yds := func() []float32 { // calc discerete diffs
-		var lambda float32 = 1 / 2
+		var lambda float32 = 1.0 / 2
 		mu := 1 - lambda
 
 		sz := len(ys)
 		cs := make([]float32, sz)        // discrete func diffs in xs
 		cs[0], cs[sz-1] = bc.c_0, bc.c_n // unused , but to save math correctness
 		for ind := 1; ind+1 < sz; ind++ {
-			diff := (ys[ind] - ys[ind-1]) / step
+			diff := (ys[ind] - ys[ind-1]) * float32(step)
 			cs[ind] = 3 * diff * (2*lambda - 1) // 3 * lamda * diff - 3 * mu * diff but cut
 		}
 		return solveMatrixEqSimpleDiags(lambda, 2, mu, cs, bc)
@@ -100,23 +104,23 @@ func (spline) new(ys []float32, step float32, bc borderCond) spline {
 	return spline{ys, yds, step}
 }
 
-func (sp spline) calcNewStep(newSt float64, amt int) []float32 {
+func (sp spline) calcNewStep(invNewSt float64, amt int) []float32 {
 	newYs := make([]float32, amt)
-	var st float64 = float64(sp.step)
+	var st = sp.step
 	var st2, st3 float64 = st * st, st * st * st
 	for ind := 0; ind < amt; ind++ {
-		x := float64(ind) * float64(newSt)
+		x := float64(ind) / invNewSt
 
-		il := min(int32(len(sp.ys)-2), max(0, int32(math.Floor(float64(x/float64(sp.step))))))
+		il := min(int32(len(sp.ys)-2), max(0, int32(math.Floor(x*sp.step))))
 		ir := il + 1
-		l := float64(sp.step) * float64(il)
-		r := float64(sp.step) * float64(ir)
+		l := float64(il) / sp.step
+		r := float64(ir) / sp.step
 
 		ld := x - l
 		rd := x - r
 
-		first := float64(sp.yds[il])*ld*rd*rd/st2 + float64(sp.ys[il])*(2*ld*rd*rd/st3+rd*rd/st2)
-		second := float64(sp.yds[ir])*ld*ld*rd/st2 + float64(sp.ys[ir])*(-2*ld*ld*rd/st3+ld*ld/st2)
+		first := float64(sp.yds[il])*ld*rd*rd*st2 + float64(sp.ys[il])*(2*ld*rd*rd*st3+rd*rd*st2)
+		second := float64(sp.yds[ir])*ld*ld*rd*st2 + float64(sp.ys[ir])*(-2*ld*ld*rd*st3+ld*ld*st2)
 		newYs[ind] = float32(first + second)
 	}
 
@@ -183,7 +187,7 @@ func (sw *ResamplerSpline) preResample(in []int16, outLen int) {
 }
 
 func (sw *ResamplerSpline) resample(sp spline) {
-	sw.outF = sp.calcNewStep(rateToSplineStep(sw.outRate), len(sw.outF))
+	sw.outF = sp.calcNewStep(float64(sw.outRate), len(sw.outF))
 }
 
 func (sw *ResamplerSpline) postResample(out []int16) {
@@ -191,7 +195,7 @@ func (sw *ResamplerSpline) postResample(out []int16) {
 }
 
 func (sw *ResamplerSpline) calcSpline() spline {
-	return spline{}.new(sw.in, float32(rateToSplineStep(sw.inRate)), sw.bc)
+	return spline{}.new(sw.in, float64(sw.inRate), sw.bc)
 }
 
 func (sw ResamplerSpline) ResampleAll(in, out []int16) error {
@@ -212,6 +216,5 @@ func (sw ResamplerSpline) Resample(in, out []int16) error {
 	return sw.ResampleAll(in, out)
 }
 
-func (rsm ResamplerSpline) Reset() { // TODO logically should be empty but not tested
-	panic("UNIMPLEMENTED")
+func (rsm ResamplerSpline) Reset() { // currently no state
 }

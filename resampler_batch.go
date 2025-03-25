@@ -126,3 +126,10 @@ func (rsm *ResampleBatch) ResampleAllInBuf() error {
 	rsm.in = rsm.in[inAmt:]
 	return nil
 }
+
+func (rsm *ResampleBatch) Reset() {
+	rsm.in = make([]int16, 0)
+	rsm.out = make([]int16, 0)
+	rsm.rsm.Reset()
+	rsm.rsmTails.Reset()
+}

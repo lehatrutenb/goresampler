@@ -48,7 +48,7 @@ func (bmr Benchmarker) New(rsmT goresampler.ResamplerT, inRate, outRate int, b *
 	}
 
 	wave := RealWaves[fmt.Sprintf("%d:%d:%d", rsmT, inRate, outRate)]
-	in, err := wave.GetFullInWave()
+	in, err := testutils.GetFullInWave(wave)
 	if err != nil {
 		b.Error(err)
 		b.FailNow()

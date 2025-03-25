@@ -106,7 +106,7 @@ func TestResampleSpline2WavesDiffErrsNotFall_SinWave(t *testing.T) {
 							curOutRate = outRate2
 						}
 						rsm := resamplerSpline2Waves{}.New(inRate, outRate1, outRate2, &acc, useFirstWave)
-						opts := testutils.TestOpts{}.NewDefault().NotFailOnHighDurationErr().NotCalcDuration().WithWaitGroup(wg)
+						opts := testutils.TestOpts{}.NewDefault().NotCalcDuration().WithWaitGroup(wg).NotFailOnHighDurationErr()
 						var tObj testutils.TestObj = testutils.TestObj{}.New(testutils.CutWave{}.New(testutils.SinWave{}.New(0, waveDurS, inRate, curOutRate), 0, rsm.calcNeedSamplesPerOutAmt((int(waveDurS)-5)*outRate1, (int(waveDurS)-5)*outRate2)), &rsm, 1, t, opts)
 						wg.Add(1)
 						go tObj.Run()
