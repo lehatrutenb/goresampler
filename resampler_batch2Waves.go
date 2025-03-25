@@ -142,3 +142,11 @@ func (rsm *ResampleBatch2Waves) ResampleAllInBuf() error {
 	rsm.in = rsm.in[inAmt:]
 	return nil
 }
+
+func (rsm *ResampleBatch2Waves) Reset() {
+	rsm.in = make([]int16, 0)
+	rsm.out1 = make([]int16, 0)
+	rsm.out2 = make([]int16, 0)
+	rsm.rsm.Reset()
+	rsm.rsmTails.Reset()
+}

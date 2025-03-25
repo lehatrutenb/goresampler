@@ -371,6 +371,5 @@ func (rsm *ResamplerFFT) Resample(in []int16, out []int16) error {
 	return nil
 }
 
-func (rsm ResamplerFFT) Reset() { // TODO logically should be empty but not tested
-	panic("UNIMPLEMENTED")
+func (rsm ResamplerFFT) Reset() {
 }
