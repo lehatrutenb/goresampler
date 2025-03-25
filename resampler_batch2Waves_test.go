@@ -524,4 +524,5 @@ func ExampleResampleBatch2Waves_ResampleAllInBuf() {
 	fmt.Println(rsmBatch.UnresampledUngetInAmt())
 	// Output:
 	// 730 59 270
+	// 0 1519 1000
 }
