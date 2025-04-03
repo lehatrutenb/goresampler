@@ -147,10 +147,6 @@ func TestResampleAutoNotDefaultConversionsError_SinWave(t *testing.T) {
 }
 
 func TestResampleAutoDiffErrsNotFall_SinWave(t *testing.T) {
-	if testing.Short() { // TODO timely solution cause of large RAM use
-		t.Skip("skipping test in short mode.")
-	}
-
 	defer func() {
 		if r := recover(); r != nil {
 			t.Error(r)
@@ -167,7 +163,7 @@ func TestResampleAutoDiffErrsNotFall_SinWave(t *testing.T) {
 				}
 				for _, acc := range []float64{1, 1e-1, 1e-2, 1e-3, 1e-4, 1e-5, 1e-6, 1e-7, 1e-8, 1e-9, 0} {
 					rsm := resamplerAutoTest{}.New(inRate, outRate, rsmT, &acc)
-					opts := testutils.TestOpts{}.NewDefault().NotFailOnHighDurationErr().NotCalcDuration().WithWaitGroup(wg)
+					opts := testutils.TestOpts{}.NewDefault().NotCalcDuration().WithWaitGroup(wg).NotFailOnHighDurationErr()
 					if rsm.calcNeedSamplesPerOutAmt((int(waveDurS)-5)*outRate)-5 >= int(waveDurS)*inRate {
 						continue
 					}
