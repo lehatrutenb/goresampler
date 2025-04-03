@@ -260,10 +260,6 @@ func TestResampleBatch2Waves_SinWave2Ch(t *testing.T) {
 }
 
 func TestResampleBatch2WavesDiffAddGetTypes_SinWave(t *testing.T) {
-	if testing.Short() { // TODO timely solution cause of large RAM use
-		t.Skip("skipping test in short mode.")
-	}
-
 	rsmT := goresampler.Resampler2WavesSplineT
 	inAmt := int(1e5)
 	defer func() {
@@ -309,10 +305,6 @@ func TestResampleBatch2WavesDiffAddGetTypes_SinWave(t *testing.T) {
 }
 
 func TestResampleBatch2WavesDiffAddAmt_SinWave(t *testing.T) {
-	if testing.Short() { // TODO timely solution cause of large RAM use
-		t.Skip("skipping test in short mode.")
-	}
-
 	inAmt := int(1e5)
 	rsmT := goresampler.Resampler2WavesSplineT
 	defer func() {
