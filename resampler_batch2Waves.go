@@ -37,16 +37,16 @@ use that func when len(out) is large (~ >1e5)
 */
 
 func (rsm *ResampleBatch2Waves) resampleMore(minRsmAmt1, minRsmAmt2 int) error {
-	inAmt, outAmt1, outAmt2 := rsm.rsm.CalcInOutSamplesPerOutAmt(minRsmAmt1, minRsmAmt2)
-	if inAmt > len(rsm.in) {
+	inAmt, outAmt1, outAmt2 := rsm.rsm.CalcInOutSamplesPerOutAmt(int64(minRsmAmt1), int64(minRsmAmt2))
+	if inAmt > int64(len(rsm.in)) {
 		return ErrNotEnoughSamples
 	}
 
 	curOutLen1 := len(rsm.out1)
 	curOutLen2 := len(rsm.out2)
-	rsm.out1 = slices.Grow(rsm.out1, outAmt1)[:len(rsm.out1)+outAmt1]
-	rsm.out2 = slices.Grow(rsm.out2, outAmt2)[:len(rsm.out2)+outAmt2] // not want to use loop there 1. slower 2. not really makes code prettier
-	rsm.rsm.Resample(rsm.in[:inAmt], rsm.out1[curOutLen1:curOutLen1+outAmt1], rsm.out2[curOutLen2:curOutLen2+outAmt2])
+	rsm.out1 = slices.Grow(rsm.out1, int(outAmt1))[:len(rsm.out1)+int(outAmt1)]
+	rsm.out2 = slices.Grow(rsm.out2, int(outAmt2))[:len(rsm.out2)+int(outAmt2)] // not want to use loop there 1. slower 2. not really makes code prettier
+	rsm.rsm.Resample(rsm.in[:inAmt], rsm.out1[curOutLen1:curOutLen1+int(outAmt1)], rsm.out2[curOutLen2:curOutLen2+int(outAmt2)])
 	rsm.in = rsm.in[inAmt:]
 	return nil
 }
@@ -133,12 +133,12 @@ func (rsm *ResampleBatch2Waves) Len() (int, int) {
 // to get resampled samples - use GetBatch and len(ResampleBatch)
 func (rsm *ResampleBatch2Waves) ResampleAllInBuf() error {
 	inAmt := len(rsm.in)
-	outAmt1, outAmt2 := rsm.rsmTails.calcOutSamplesPerInAmt(inAmt)
+	outAmt1, outAmt2 := rsm.rsmTails.calcOutSamplesPerInAmt(int64(inAmt))
 	curOutLen1 := len(rsm.out1)
 	curOutLen2 := len(rsm.out2)
-	rsm.out1 = slices.Grow(rsm.out1, outAmt1)[:len(rsm.out1)+outAmt1]
-	rsm.out2 = slices.Grow(rsm.out2, outAmt2)[:len(rsm.out2)+outAmt2] // not want to use loop there 1. slower 2. not really makes code prettier
-	rsm.rsmTails.ResampleAll(rsm.in[:inAmt], rsm.out1[curOutLen1:curOutLen1+outAmt1], rsm.out2[curOutLen2:curOutLen2+outAmt2])
+	rsm.out1 = slices.Grow(rsm.out1, int(outAmt1))[:len(rsm.out1)+int(outAmt1)]
+	rsm.out2 = slices.Grow(rsm.out2, int(outAmt2))[:len(rsm.out2)+int(outAmt2)] // not want to use loop there 1. slower 2. not really makes code prettier
+	rsm.rsmTails.ResampleAll(rsm.in[:inAmt], rsm.out1[curOutLen1:curOutLen1+int(outAmt1)], rsm.out2[curOutLen2:curOutLen2+int(outAmt2)])
 	rsm.in = rsm.in[inAmt:]
 	return nil
 }

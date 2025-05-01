@@ -5,10 +5,10 @@ import (
 	"fmt"
 	"log"
 	"slices"
-	"sync"
 	"testing"
 
 	goresampler "github.com/lehatrutenb/goresampler"
+	"golang.org/x/sync/errgroup"
 
 	testutils "github.com/lehatrutenb/goresampler/internal/test_utils"
 
@@ -27,7 +27,7 @@ type ResampleBatch2WavesTest struct {
 }
 
 func (ResampleBatch2WavesTest) New(inRate, outRate1, outRate2 int, rsmT goresampler.Resampler2WavesT, opts batchWorkType, returnFirst, resampleTail bool) *ResampleBatch2WavesTest {
-	rsm, _, err := goresampler.NewResamplerAuto2Waves(inRate, outRate1, outRate2, rsmT, nil)
+	rsm, _, err := goresampler.NewResamplerAuto2Waves[goresampler.BaseResamplerOptions](inRate, outRate1, outRate2, rsmT, nil)
 	if err != nil {
 		panic(err)
 	}
@@ -172,7 +172,7 @@ func TestResampleBatch2Waves_Reset(t *testing.T) {
 	}()
 
 	waveDurS := float64(60)
-	for _, rsmT := range []goresampler.ResamplerT{goresampler.ResamplerConstExprT, goresampler.ResamplerSplineT, goresampler.ResamplerFFtT} {
+	for _, rsmT := range []goresampler.ResamplerT{goresampler.ResamplerConstExprT, goresampler.ResamplerSplineT, goresampler.ResamplerSincT, goresampler.ResamplerFFtT} {
 		for _, inRate := range []int{8000, 11000, 11025, 16000, 44000, 44100, 48000} {
 			outRate1 := 8000
 			outRate2 := 16000
@@ -192,7 +192,7 @@ func TestResampleBatch2Waves_Reset(t *testing.T) {
 			res := make([][]int16, 4)
 			waves[0], err = testutils.GetFullInWave(testutils.SinWave{}.New(0, waveDurS, inRate, outRate1))
 			waves[1], _ = testutils.GetFullInWave(testutils.SinWave{}.New(0, waveDurS, inRate, outRate1))
-			inRsm, _, _ := goresampler.NewResamplerAuto2Waves(8000, 16000, 8000, goresampler.Resampler2WavesSplineT, nil)
+			inRsm, _, _ := goresampler.NewResamplerAuto2Waves[goresampler.BaseResamplerOptions](8000, 16000, 8000, goresampler.Resampler2WavesSplineT, nil)
 			rsm := goresampler.NewResampleBatch2Waves(inRsm, inRate, outRate1, outRate2)
 			for attemptInd := 0; attemptInd < 2; attemptInd++ {
 				rsm.Reset()
@@ -269,7 +269,7 @@ func TestResampleBatch2WavesDiffAddGetTypes_SinWave(t *testing.T) {
 	}()
 
 	waveDurS := float64(20)
-	wg := &sync.WaitGroup{}
+	eg := &errgroup.Group{}
 	for _, inRate := range []int{8000, 11000, 11025, 16000, 44000, 44100, 48000} {
 		for _, outRate1 := range []int{8000, 16000} {
 			for _, outRate2 := range []int{8000, 16000} {
@@ -283,7 +283,7 @@ func TestResampleBatch2WavesDiffAddGetTypes_SinWave(t *testing.T) {
 							curOutRate = outRate2
 						}
 
-						opts := testutils.TestOpts{}.NewDefault().WithWaitGroup(wg)
+						opts := testutils.TestOpts{}.NewDefault()
 						if resampleTail {
 							opts.NotFailOnHighDurationErr()
 						}
@@ -291,17 +291,15 @@ func TestResampleBatch2WavesDiffAddGetTypes_SinWave(t *testing.T) {
 							for _, getLB := range []bool{false, true} {
 								rsm := ResampleBatch2WavesTest{}.New(inRate, outRate1, outRate2, rsmT, setParams(addLB, getLB, 1000, 480, resampleTail), useFirstWave, resampleTail)
 								var tObj testutils.TestObj = testutils.TestObj{}.New(testutils.CutWave{}.New(testutils.SinWave{}.New(0, waveDurS, inRate, curOutRate), 0, inAmt), rsm, 1, t, opts)
-								wg.Add(1)
-								go tObj.Run()
+								eg.Go(tObj.Run)
 							}
 						}
 					}
 				}
 			}
 		}
+		assert.NoError(t, eg.Wait())
 	}
-
-	wg.Wait()
 }
 
 func TestResampleBatch2WavesDiffAddAmt_SinWave(t *testing.T) {
@@ -314,7 +312,7 @@ func TestResampleBatch2WavesDiffAddAmt_SinWave(t *testing.T) {
 	}()
 
 	waveDurS := float64(20)
-	wg := &sync.WaitGroup{}
+	eg := &errgroup.Group{}
 	for _, inRate := range []int{8000, 11000, 11025, 16000, 44000, 44100, 48000} {
 		for _, outRate1 := range []int{8000, 16000} {
 			for _, outRate2 := range []int{8000, 16000} {
@@ -334,16 +332,14 @@ func TestResampleBatch2WavesDiffAddAmt_SinWave(t *testing.T) {
 						}
 						inWave := testutils.CutWave{}.New(testutils.SinWave{}.New(0, waveDurS, inRate, curOutRate), 0, curInAmt)
 						rsm := ResampleBatch2WavesTest{}.New(inRate, outRate1, outRate2, rsmT, setParams(false, false, addAmt, 480, false), useFirstWave, false)
-						var tObj testutils.TestObj = testutils.TestObj{}.New(inWave, rsm, 1, t, testutils.TestOpts{}.NewDefault().WithWaitGroup(wg))
-						wg.Add(1)
-						go tObj.Run()
+						var tObj testutils.TestObj = testutils.TestObj{}.New(inWave, rsm, 1, t, testutils.TestOpts{}.NewDefault())
+						eg.Go(tObj.Run)
 					}
 				}
 			}
 		}
+		assert.NoError(t, eg.Wait())
 	}
-
-	wg.Wait()
 }
 
 func TestResampleBatch2Waves_RealWave(t *testing.T) {
@@ -392,7 +388,7 @@ func TestResampleBatch2Waves_RealWave(t *testing.T) {
 
 func ExampleNewResampleBatch2Waves() {
 	rsmT := goresampler.Resampler2WavesSplineT
-	rsm, ok, err := goresampler.NewResamplerAuto2Waves(16000, 8000, 16000, rsmT, nil)
+	rsm, ok, err := goresampler.NewResamplerAuto2Waves[goresampler.BaseResamplerOptions](16000, 8000, 16000, rsmT, nil)
 	if !ok {
 		fmt.Printf("failed fo fit base %s error sec difference in resampling from %d to %d", rsmT.String(), 16000, 8000)
 		return
@@ -412,7 +408,7 @@ func ExampleResampleBatch2Waves_AddBatch() {
 	defer func() { _ = err }()
 
 	rsmT := goresampler.Resampler2WavesSplineT
-	rsm, _, err := goresampler.NewResamplerAuto2Waves(16000, 8000, 16000, rsmT, nil)
+	rsm, _, err := goresampler.NewResamplerAuto2Waves[goresampler.BaseResamplerOptions](16000, 8000, 16000, rsmT, nil)
 
 	rsmBatch := goresampler.NewResampleBatch2Waves(rsm, 16000, 8000, 16000)
 
@@ -430,7 +426,7 @@ func ExampleResampleBatch2Waves_GetBatchFirstWave() {
 	defer func() { _ = err }()
 
 	rsmT := goresampler.Resampler2WavesSplineT
-	rsm, _, err := goresampler.NewResamplerAuto2Waves(16000, 8000, 16000, rsmT, nil)
+	rsm, _, err := goresampler.NewResamplerAuto2Waves[goresampler.BaseResamplerOptions](16000, 8000, 16000, rsmT, nil)
 
 	rsmBatch := goresampler.NewResampleBatch2Waves(rsm, 16000, 8000, 16000)
 
@@ -456,7 +452,7 @@ func ExampleResampleBatch2Waves_GetLargeBatchFirstWave() {
 	defer func() { _ = err }()
 
 	rsmT := goresampler.Resampler2WavesSplineT
-	rsm, _, err := goresampler.NewResamplerAuto2Waves(16000, 8000, 16000, rsmT, nil)
+	rsm, _, err := goresampler.NewResamplerAuto2Waves[goresampler.BaseResamplerOptions](16000, 8000, 16000, rsmT, nil)
 
 	rsmBatch := goresampler.NewResampleBatch2Waves(rsm, 16000, 8000, 16000)
 
@@ -484,7 +480,7 @@ func ExampleResampleBatch2Waves_UnresampledUngetInAmt() {
 	defer func() { _ = err }()
 
 	errRate := 1e-6 // fix err rate not to fail after change of it inside resampler
-	rsm, _, err := goresampler.NewResamplerAuto2Waves(8000, 16000, 8000, goresampler.Resampler2WavesSplineT, &errRate)
+	rsm, _, err := goresampler.NewResamplerAuto2Waves(8000, 16000, 8000, goresampler.Resampler2WavesSplineT, &goresampler.BaseResamplerOptions{MaxErrRateP: &errRate})
 
 	rsmBatch := goresampler.NewResampleBatch2Waves(rsm, 8000, 16000, 8000)
 	err = rsmBatch.AddBatch(make([]int16, 1000))
@@ -502,7 +498,7 @@ func ExampleResampleBatch2Waves_ResampleAllInBuf() {
 	defer func() { _ = err }()
 
 	errRate := 1e-6 // fix err rate not to fail after change of it inside resampler
-	rsm, _, err := goresampler.NewResamplerAuto2Waves(8000, 16000, 8000, goresampler.Resampler2WavesSplineT, &errRate)
+	rsm, _, err := goresampler.NewResamplerAuto2Waves(8000, 16000, 8000, goresampler.Resampler2WavesSplineT, &goresampler.BaseResamplerOptions{MaxErrRateP: &errRate})
 
 	rsmBatch := goresampler.NewResampleBatch2Waves(rsm, 8000, 16000, 8000)
 	err = rsmBatch.AddBatch(make([]int16, 1000))

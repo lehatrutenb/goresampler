@@ -20,7 +20,7 @@ type ResamplerLTest struct {
 }
 
 func (ResamplerLTest) New(inRate, outRate int) *ResamplerLTest {
-	rsm, _, err := goresampler.NewResamplerAuto(inRate, outRate, goresampler.ResamplerConstExprT, nil)
+	rsm, _, err := goresampler.NewResamplerAuto[goresampler.BaseResamplerOptions](inRate, outRate, goresampler.ResamplerConstExprT, nil)
 	if err != nil {
 		panic(err)
 	}
@@ -41,10 +41,9 @@ func (rsm *ResamplerLTest) Resample(inp []int16) error { // care moved allocatio
 	return rsm.rsm.Resample(inp, rsm.resampled)
 }
 func (rsm *ResamplerLTest) calcNeedSamplesPerOutAmt(outAmt int) int {
-	var inAmt int
-	inAmt, outAmt = rsm.rsm.CalcInOutSamplesPerOutAmt(outAmt)
-	rsm.resampled = make([]int16, outAmt)
-	return inAmt
+	inAmt, resOutAmt := rsm.rsm.CalcInOutSamplesPerOutAmt(int64(outAmt))
+	rsm.resampled = make([]int16, resOutAmt)
+	return int(inAmt)
 }
 func (rsm ResamplerLTest) OutLen() int {
 	return len(rsm.resampled)
@@ -62,9 +61,7 @@ func (rsm ResamplerLTest) UnresampledUngetInAmt() (int, int) {
 	return 0, 0
 }
 
-func TestResample11To8L_SinWave(t *testing.T) {
-	inRate := 11000
-	outRate := 8000
+func testOnSinWaveConstExpr(t *testing.T, inRate, outRate int) {
 	waveDurS := float64(30)
 	defer func() {
 		if r := recover(); r != nil {
@@ -83,114 +80,53 @@ func TestResample11To8L_SinWave(t *testing.T) {
 	}
 }
 
-func TestResample16To8L_SinWave(t *testing.T) {
+func TestResampleConstExpr11000To8000_SinWave(t *testing.T) {
+	inRate := 11000
+	outRate := 8000
+	testOnSinWaveConstExpr(t, inRate, outRate)
+}
+
+func TestResampleConstExpr16000To8000_SinWave(t *testing.T) {
 	inRate := 16000
 	outRate := 8000
-	waveDurS := float64(30)
-	defer func() {
-		if r := recover(); r != nil {
-			t.Error(r)
-		}
-	}()
-	rsm := ResamplerLTest{}.New(inRate, outRate)
-	var tObj testutils.TestObj = testutils.TestObj{}.New(testutils.CutWave{}.New(testutils.SinWave{}.New(0, waveDurS, inRate, outRate), 0, rsm.calcNeedSamplesPerOutAmt((int(waveDurS)-10)*outRate)), rsm, 1, t, testutils.TestOpts{}.NewDefault())
-	err := tObj.Run()
-	if !assert.NoError(t, err, "failed to run resampler") {
-		t.Error(err)
-	}
-	err = tObj.Save("rsm_const")
-	if !assert.NoError(t, err, "failed to save test results") {
-		t.Error(err)
-	}
+	testOnSinWaveConstExpr(t, inRate, outRate)
 }
 
-func TestResample44000To8L_SinWave(t *testing.T) {
+func TestResampleConstExpr44000To8000_SinWave(t *testing.T) {
 	inRate := 44000
 	outRate := 8000
-	waveDurS := float64(30)
-	defer func() {
-		if r := recover(); r != nil {
-			t.Error(r)
-		}
-	}()
-	rsm := ResamplerLTest{}.New(inRate, outRate)
-	var tObj testutils.TestObj = testutils.TestObj{}.New(testutils.CutWave{}.New(testutils.SinWave{}.New(0, waveDurS, inRate, outRate), 0, rsm.calcNeedSamplesPerOutAmt((int(waveDurS)-10)*outRate)), rsm, 1, t, testutils.TestOpts{}.NewDefault())
-	err := tObj.Run()
-	if !assert.NoError(t, err, "failed to run resampler") {
-		t.Error(err)
-	}
-	err = tObj.Save("rsm_const")
-	if !assert.NoError(t, err, "failed to save test results") {
-		t.Error(err)
-	}
+	testOnSinWaveConstExpr(t, inRate, outRate)
 }
 
-func TestResample48To8L_SinWave(t *testing.T) {
+func TestResampleConstExpr48000To8000_SinWave(t *testing.T) {
 	inRate := 48000
 	outRate := 8000
-	waveDurS := float64(30)
-	defer func() {
-		if r := recover(); r != nil {
-			t.Error(r)
-		}
-	}()
-	rsm := ResamplerLTest{}.New(inRate, outRate)
-	var tObj testutils.TestObj = testutils.TestObj{}.New(testutils.CutWave{}.New(testutils.SinWave{}.New(0, waveDurS, inRate, outRate), 0, rsm.calcNeedSamplesPerOutAmt((int(waveDurS)-10)*outRate)), rsm, 1, t, testutils.TestOpts{}.NewDefault())
-	err := tObj.Run()
-	if !assert.NoError(t, err, "failed to run resampler") {
-		t.Error(err)
-	}
-	err = tObj.Save("rsm_const")
-	if !assert.NoError(t, err, "failed to save test results") {
-		t.Error(err)
-	}
+	testOnSinWaveConstExpr(t, inRate, outRate)
 }
 
-func TestResample8To16L_SinWave(t *testing.T) {
+func TestResampleConstExpr8000To16000_SinWave(t *testing.T) {
 	inRate := 8000
 	outRate := 16000
-	waveDurS := float64(30)
-	defer func() {
-		if r := recover(); r != nil {
-			t.Error(r)
-		}
-	}()
-	rsm := ResamplerLTest{}.New(inRate, outRate)
-	var tObj testutils.TestObj = testutils.TestObj{}.New(testutils.CutWave{}.New(testutils.SinWave{}.New(0, waveDurS, inRate, outRate), 0, rsm.calcNeedSamplesPerOutAmt((int(waveDurS)-10)*outRate)), rsm, 1, t, testutils.TestOpts{}.NewDefault())
-	err := tObj.Run()
-	if !assert.NoError(t, err, "failed to run resampler") {
-		t.Error(err)
-	}
-	err = tObj.Save("rsm_const")
-	if !assert.NoError(t, err, "failed to save test results") {
-		t.Error(err)
-	}
+	testOnSinWaveConstExpr(t, inRate, outRate)
 }
 
-func TestResample11To16L_SinWave(t *testing.T) {
+func TestResampleConstExpr11000To16000_SinWave(t *testing.T) {
 	inRate := 11000
 	outRate := 16000
-	waveDurS := float64(30)
-	defer func() {
-		if r := recover(); r != nil {
-			t.Error(r)
-		}
-	}()
-	rsm := ResamplerLTest{}.New(inRate, outRate)
-	var tObj testutils.TestObj = testutils.TestObj{}.New(testutils.CutWave{}.New(testutils.SinWave{}.New(0, waveDurS, inRate, outRate), 0, rsm.calcNeedSamplesPerOutAmt((int(waveDurS)-10)*outRate)), rsm, 1, t, testutils.TestOpts{}.NewDefault())
-	err := tObj.Run()
-	if !assert.NoError(t, err, "failed to run resampler") {
-		t.Error(err)
-	}
-	err = tObj.Save("rsm_const")
-	if !assert.NoError(t, err, "failed to save test results") {
-		t.Error(err)
-	}
+	testOnSinWaveConstExpr(t, inRate, outRate)
 }
 
-func TestResample44000To16L_SinWave(t *testing.T) {
+func TestResampleConstExpr44000To16000_SinWave(t *testing.T) {
 	inRate := 44000
 	outRate := 16000
+	testOnSinWaveConstExpr(t, inRate, outRate)
+}
+
+func testOnRealWaveConstExpr(t *testing.T, inRate, outRate int) {
+	if testing.Short() {
+		t.Skip("skipping test in short mode.")
+	}
+
 	waveDurS := float64(30)
 	defer func() {
 		if r := recover(); r != nil {
@@ -198,7 +134,7 @@ func TestResample44000To16L_SinWave(t *testing.T) {
 		}
 	}()
 	rsm := ResamplerLTest{}.New(inRate, outRate)
-	var tObj testutils.TestObj = testutils.TestObj{}.New(testutils.CutWave{}.New(testutils.SinWave{}.New(0, waveDurS, inRate, outRate), 0, rsm.calcNeedSamplesPerOutAmt((int(waveDurS)-10)*outRate)), rsm, 1, t, testutils.TestOpts{}.NewDefault())
+	var tObj testutils.TestObj = testutils.TestObj{}.New(testutils.CutWave{}.New(testutils.RealWave{}.New(0, inRate, &outRate, nil), 0, rsm.calcNeedSamplesPerOutAmt((int(waveDurS)-10)*outRate)), rsm, 1, t, testutils.TestOpts{}.NewDefault().WithCrSF(true).NotFailOnHighErr())
 	err := tObj.Run()
 	if !assert.NoError(t, err, "failed to run resampler") {
 		t.Error(err)
@@ -209,23 +145,44 @@ func TestResample44000To16L_SinWave(t *testing.T) {
 	}
 }
 
-func TestResample48To16L_SinWave(t *testing.T) {
+func TestResampleConstExpr11000To8000_RealWave(t *testing.T) {
+	inRate := 11000
+	outRate := 8000
+	testOnRealWaveConstExpr(t, inRate, outRate)
+}
+
+func TestResampleConstExpr16000To8000_RealWave(t *testing.T) {
+	inRate := 16000
+	outRate := 8000
+	testOnRealWaveConstExpr(t, inRate, outRate)
+}
+
+func TestResampleConstExpr44000To8000_RealWave(t *testing.T) {
+	inRate := 44000
+	outRate := 8000
+	testOnRealWaveConstExpr(t, inRate, outRate)
+}
+
+func TestResampleConstExpr48000To8000_RealWave(t *testing.T) {
 	inRate := 48000
+	outRate := 8000
+	testOnRealWaveConstExpr(t, inRate, outRate)
+}
+
+func TestResampleConstExpr8000To16000_RealWave(t *testing.T) {
+	inRate := 8000
 	outRate := 16000
-	waveDurS := float64(30)
-	defer func() {
-		if r := recover(); r != nil {
-			t.Error(r)
-		}
-	}()
-	rsm := ResamplerLTest{}.New(inRate, outRate)
-	var tObj testutils.TestObj = testutils.TestObj{}.New(testutils.CutWave{}.New(testutils.SinWave{}.New(0, waveDurS, inRate, outRate), 0, rsm.calcNeedSamplesPerOutAmt((int(waveDurS)-10)*outRate)), rsm, 1, t, testutils.TestOpts{}.NewDefault())
-	err := tObj.Run()
-	if !assert.NoError(t, err, "failed to run resampler") {
-		t.Error(err)
-	}
-	err = tObj.Save("rsm_const")
-	if !assert.NoError(t, err, "failed to save test results") {
-		t.Error(err)
-	}
+	testOnRealWaveConstExpr(t, inRate, outRate)
+}
+
+func TestResampleConstExpr11000To16000_RealWave(t *testing.T) {
+	inRate := 11000
+	outRate := 16000
+	testOnRealWaveConstExpr(t, inRate, outRate)
+}
+
+func TestResampleConstExpr44000To16000_RealWave(t *testing.T) {
+	inRate := 44000
+	outRate := 16000
+	testOnRealWaveConstExpr(t, inRate, outRate)
 }

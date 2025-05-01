@@ -12,6 +12,8 @@ var (
 	// ErrGotIncorrectInOutLen indicates that in or out arr lens
 	// not equal to any call of ResamplerFFT.CalcInOutSamplesPerOutAmt
 	ErrGotIncorrectInOutLen = errors.New("got unexpected in or out array lens")
+	// ErrGotInRateLessThanOutRate indicates fft resampler got inRate < outRate
+	ErrGotInRateLessThanOutRate = errors.New("fft resampler can't upsample")
 )
 
 type ResamplerFFT struct {
@@ -30,13 +32,16 @@ try to find batch input amt to have less err (0..1) rate than given maxErrRateP
 if failed to find such batch to fit maxErrRate,  second arg is false, otherwise true (but even with false, resampler is fine to use)
 */
 
-func NewResamplerFFT(inRate, outRate int, maxErrRateP *float64) (*ResamplerFFT, bool) {
-	var maxErrRate = baseTimeErrRate
-	if maxErrRateP != nil {
-		maxErrRate = *maxErrRateP
+func NewResamplerFFT(inRate, outRate int, opts *BaseResamplerOptions) (*ResamplerFFT, bool, error) {
+	if inRate < outRate {
+		return &ResamplerFFT{}, false, ErrGotInRateLessThanOutRate
 	}
-	bSzs, ok := findBatchSzs(inRate, outRate, maxErrRate)
-	return &ResamplerFFT{inRate: inRate, outRate: outRate, batchSzs: bSzs}, ok
+	if opts == nil {
+		opts = &BaseResamplerOptions{}
+	}
+	opts.Init()
+	bSzs, ok := findBatchSzs(inRate, outRate, *opts.MaxErrRateP)
+	return &ResamplerFFT{inRate: inRate, outRate: outRate, batchSzs: bSzs}, ok, nil
 }
 
 func (rsm ResamplerFFT) GetOutWave() []int16 {
@@ -180,7 +185,7 @@ func chirpFilterCoefs(arrSz int) (forwRe, forwIm []float32, backwRe, backwIm []f
 	for i := 0; i < len(res); i++ {
 		cSin, cCos := float64(0), float64(1)
 		if i != 0 {
-			cSin, cCos = math.Sincos(math.Pi / float64(arrSz) * float64(i*i))
+			cSin, cCos = math.Sincos(math.Pi / float64(arrSz) * float64(int64(i)*int64(i)))
 		}
 		forwRe[i], forwIm[i] = float32(cCos), float32(cSin)
 		backwRe[i], backwIm[i] = float32(cCos), -float32(cSin)
@@ -191,8 +196,9 @@ func chirpFilterCoefs(arrSz int) (forwRe, forwIm []float32, backwRe, backwIm []f
 func bluesteinFFT(re []float32) ([]float32, []float32) {
 	sLen := len(re)
 	fForwRe, fForwIm, fBackwRe, fBackwIm := chirpFilterCoefs(len(re))
+
 	setStrictP2Len(&re)
-	if len(re) < 2*sLen-1 {
+	if len(re) < 2*sLen-1 { // alg restriction: M >= 2*N - 1
 		re = append(re, 0)
 		setStrictP2Len(&re)
 	}
@@ -216,6 +222,7 @@ func bluesteinFFT(re []float32) ([]float32, []float32) {
 	}
 
 	forwardFFT(re, im)
+
 	forwardFFT(convArrRe, convArrIm)
 	for i := 0; i < len(re); i++ {
 		re[i], im[i] = re[i]*convArrRe[i]-im[i]*convArrIm[i], re[i]*convArrIm[i]+im[i]*convArrRe[i]
@@ -263,7 +270,11 @@ type batchSzWithDiff struct {
 func findBatchSzs(inRate, outRate int, maxErrRate float64) ([]batchSzWithDiff, bool) {
 	foundFitErrSz := false
 	bestSzs := make([]batchSzWithDiff, 30)
-	for pow2 := 4; pow2 < len(bestSzs); pow2++ { // 4 is choosen just not to divide weave into too small peices (2^3)
+	minDiffNotFitD := float64(1e18)
+	minDiffNotFitOutSz := 16 // 65536 // why that number? 1) it is 2^k 2) it is small enought not to get more than 1e7 samples on input
+	minDiffNotFitInSz := resampleutils.GetInAmtPerOutAmt(inRate, outRate, minDiffNotFitOutSz)
+
+	for pow2 := 4; pow2 < len(bestSzs); pow2++ { // 4 is choosen just not to divide wave into too small peices (2^3)
 		l, r := int64(0), int64((1 << 35))
 		curPow := (1 << pow2)
 		for l+2 < r {
@@ -281,6 +292,16 @@ func findBatchSzs(inRate, outRate int, maxErrRate float64) ([]batchSzWithDiff, b
 			curD := calcDiff(i, curPow, inRate, outRate)
 
 			minV, maxV := resampleutils.GetMinMaxSmplsAmt(inRate, outRate, i) // check that err in time with such input is fit err
+
+			if i >= int64(MaxResamplingBatchLen) {
+				continue
+			}
+
+			if pow2 >= minDiffNotFitOutSz && curD < minDiffNotFitD*float64(int(1)<<(pow2-minDiffNotFitOutSz)) { // * 2^k cause the larger size the fewer that error for it
+				minDiffNotFitD = curD
+				minDiffNotFitInSz = int(i) // care - it works cause before is checked i >= int64(FFtMaxResamplingBatchLen)
+				minDiffNotFitOutSz = pow2
+			}
 			// pow2+1 != len(bestSzs) not to rm all sizes
 			if !resampleutils.CheckErrMinMax(minV, maxV, maxErrRate/2.1) { // why / 2.1? - in batching error ~ multiplied by 2 && cause float / 2 is not perfect chose 2.1
 				if pow2+1 != len(bestSzs) {
@@ -296,10 +317,15 @@ func findBatchSzs(inRate, outRate int, maxErrRate float64) ([]batchSzWithDiff, b
 			}
 		}
 	}
+
+	if !foundFitErrSz { // if can't find fit sizes - so get best found
+		bestSzs[minDiffNotFitOutSz] = batchSzWithDiff{int64(minDiffNotFitInSz), minDiffNotFitD}
+	}
+
 	return bestSzs, foundFitErrSz
 }
 
-func (rsm *ResamplerFFT) CalcNeedSamplesPerOutAmt(outAmt int) int {
+func (rsm *ResamplerFFT) CalcNeedSamplesPerOutAmt(outAmt int64) int64 {
 	lZeroInd := 0
 	for i := 0; i < len(rsm.batchSzs) && rsm.batchSzs[i].sz == 0; i++ {
 		lZeroInd = i
@@ -310,7 +336,7 @@ func (rsm *ResamplerFFT) CalcNeedSamplesPerOutAmt(outAmt int) int {
 		outAmt += (1 << lZeroInd) - (outAmt % (1 << lZeroInd))
 	}
 
-	var inAmt int = 0
+	var inAmt int64 = 0
 	for i := len(rsm.batchSzs) - 1; i >= 0; i-- {
 		if rsm.batchSzs[i].sz == 0 {
 			continue
@@ -318,21 +344,21 @@ func (rsm *ResamplerFFT) CalcNeedSamplesPerOutAmt(outAmt int) int {
 
 		for outAmt >= (1 << i) {
 			outAmt -= (1 << i)
-			inAmt += int(rsm.batchSzs[i].sz)
+			inAmt += rsm.batchSzs[i].sz
 		}
 	}
 	return inAmt
 }
 
-func (rsm *ResamplerFFT) calcOutSamplesPerInAmt(inAmt int) int {
-	var outAmt int = 0
+func (rsm *ResamplerFFT) calcOutSamplesPerInAmt(inAmt int64) int64 {
+	var outAmt int64 = 0
 	for i := len(rsm.batchSzs) - 1; i >= 0; i-- {
-		cur := int(rsm.batchSzs[i].sz)
+		cur := rsm.batchSzs[i].sz
 		if cur == 0 {
 			continue
 		}
 
-		for inAmt >= cur {
+		for inAmt >= cur { // if Type(inAmt) = int => (int64(inAmt) >= cur) -> (int(cur)==cur)
 			inAmt -= cur
 			outAmt += (1 << i)
 		}
@@ -340,7 +366,7 @@ func (rsm *ResamplerFFT) calcOutSamplesPerInAmt(inAmt int) int {
 	return outAmt
 }
 
-func (rsm *ResamplerFFT) CalcInOutSamplesPerOutAmt(outAmt int) (int, int) {
+func (rsm *ResamplerFFT) CalcInOutSamplesPerOutAmt(outAmt int64) (int64, int64) {
 	in := rsm.CalcNeedSamplesPerOutAmt(outAmt)
 	return in, rsm.calcOutSamplesPerInAmt(in)
 }
