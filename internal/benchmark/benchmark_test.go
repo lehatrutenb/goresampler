@@ -41,7 +41,7 @@ func (bmr Benchmarker) New(rsmT goresampler.ResamplerT, inRate, outRate int, b *
 		b.FailNow()
 	}
 
-	rsm, _, err := goresampler.NewResamplerAuto(inRate, outRate, rsmT, nil)
+	rsm, _, err := goresampler.NewResamplerAuto[goresampler.BaseResamplerOptions](inRate, outRate, rsmT, nil)
 	if err != nil {
 		b.Error(err)
 		b.FailNow()
@@ -60,8 +60,8 @@ func (bmr Benchmarker) New(rsmT goresampler.ResamplerT, inRate, outRate int, b *
 func (bmr Benchmarker) setup() ([]int16, []int16, []int16, []int16) {
 	in1 := utils.GetWithStep(bmr.in, 0, 2)
 	in2 := utils.GetWithStep(bmr.in, 1, 2)
-	out1 := make([]int16, testutils.CalcMinOutSamplesPerInAmt(len(in1), bmr.rsm))
-	out2 := make([]int16, testutils.CalcMinOutSamplesPerInAmt(len(in2), bmr.rsm))
+	out1 := make([]int16, testutils.CalcMinOutSamplesPerInAmt(int64(len(in1)), bmr.rsm))
+	out2 := make([]int16, testutils.CalcMinOutSamplesPerInAmt(int64(len(in2)), bmr.rsm))
 	return in1, in2, out1, out2
 }
 
@@ -82,9 +82,11 @@ func (bmr Benchmarker) resample(in1, in2, out1, out2 []int16) []int16 {
 	return utils.Merge2Channels(out1, out2)
 }
 
+var convRsmTs = map[goresampler.ResamplerT]int{goresampler.ResamplerConstExprT: 0, goresampler.ResamplerSplineT: 1, goresampler.ResamplerSincT: 2, goresampler.ResamplerFFtT: 3}
+
 func (bmr Benchmarker) tearDown(out []int16) {
-	pref := (int(bmr.rsmT)-1)*9 + inRateConv[bmr.inRate] + outRateConv[bmr.outRate]*5 // just try to index all audios
-	pref -= pref / 8
+	pref := convRsmTs[bmr.rsmT]*9 + inRateConv[bmr.inRate] + outRateConv[bmr.outRate]*5 // just try to index all audios
+	pref -= (pref + 1) / 9
 
 	err := testutils.SaveSoundFile(fmt.Sprintf("%s/%d_%s_%dto%d.mp4", OUTPUT_PATH, pref, bmr.rsmT, bmr.inRate, bmr.outRate), bmr.wave.NumChannels(), bmr.outRate, out) // mp4 not breakes anything - just to load to git
 	bmr.chkErr(err)
@@ -135,10 +137,20 @@ func BenchmarkFFT16000_8000(b *testing.B) { benchResampler(3, 16000, 8000, b) }
 func BenchmarkFFT44100_8000(b *testing.B) { benchResampler(3, 44100, 8000, b) }
 func BenchmarkFFT48000_8000(b *testing.B) { benchResampler(3, 48000, 8000, b) }
 
-// func BenchmarkFFT8000_16000(b *testing.B)  { benchResampler(2, 8000, 16000, b) }
-// func BenchmarkFFT11025_16000(b *testing.B) { benchResampler(2, 11025, 16000, b) }
+func BenchmarkFFT8000_16000(b *testing.B)  { benchResampler(2, 8000, 16000, b) }
+func BenchmarkFFT11025_16000(b *testing.B) { benchResampler(2, 11025, 16000, b) }
 func BenchmarkFFT44100_16000(b *testing.B) { benchResampler(3, 44100, 16000, b) }
 func BenchmarkFFT48000_16000(b *testing.B) { benchResampler(3, 48000, 16000, b) }
+
+func BenchmarkSinc11025_8000(b *testing.B) { benchResampler(6, 11025, 8000, b) }
+func BenchmarkSinc16000_8000(b *testing.B) { benchResampler(6, 16000, 8000, b) }
+func BenchmarkSinc44100_8000(b *testing.B) { benchResampler(6, 44100, 8000, b) }
+func BenchmarkSinc48000_8000(b *testing.B) { benchResampler(6, 48000, 8000, b) }
+
+func BenchmarkSinc8000_16000(b *testing.B)  { benchResampler(6, 8000, 16000, b) }
+func BenchmarkSinc11025_16000(b *testing.B) { benchResampler(6, 11025, 16000, b) }
+func BenchmarkSinc44100_16000(b *testing.B) { benchResampler(6, 44100, 16000, b) }
+func BenchmarkSinc48000_16000(b *testing.B) { benchResampler(6, 48000, 16000, b) }
 
 func TestMain(t *testing.M) {
 	MIN_SAMPLES_AMT = 0

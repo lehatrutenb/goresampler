@@ -34,7 +34,7 @@ jobs:
       run: make clearTestDir
 
     - name: Test
-      run: go test -test.short -v ./... -bench=^$ -tags 'NoBenchmarks'
+      run: go test -test.short -v ./... -timeout=30m -bench=^$ -tags 'NoBenchmarks'
 
   check-import:
     if: github.ref == 'refs/heads/main'
