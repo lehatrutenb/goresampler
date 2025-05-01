@@ -14,8 +14,8 @@ var (
 	ErrNotExpResampling = errors.New("called not expected resampling cfg")
 )
 
-func CalcMinOutSamplesPerInAmt(inAmt int, rsm goresampler.Resampler) int {
-	l, r := 0, inAmt*2+int(1e6) // cause max multiplier in rsm 8->16 // add 1e6 to go over restrictions
+func CalcMinOutSamplesPerInAmt(inAmt int64, rsm goresampler.Resampler) int64 {
+	l, r := int64(0), inAmt*2+int64(1e7) // cause max multiplier in rsm 8->16 // add 1e7 to go over restrictions
 	for l+1 < r {
 		mid := (l + r) / 2
 		if rsm.CalcNeedSamplesPerOutAmt(mid) < inAmt {
@@ -27,8 +27,8 @@ func CalcMinOutSamplesPerInAmt(inAmt int, rsm goresampler.Resampler) int {
 	return utils.GetSecondReturnedVal(rsm.CalcInOutSamplesPerOutAmt(r))
 }
 
-func CalcMinOutSamplesPerInAmt2Waves(inAmt int, rsm goresampler.Resampler2Waves) (int, int) {
-	l, r := 0, inAmt*2+int(1e6) // cause max multiplier in rsm 8->16 // add 1e6 to go over restrictions
+func CalcMinOutSamplesPerInAmt2Waves(inAmt int64, rsm goresampler.Resampler2Waves) (int64, int64) {
+	l, r := int64(0), inAmt*2+int64(1e7) // cause max multiplier in rsm 8->16 // add 1e7 to go over restrictions
 	for l+1 < r {
 		mid := (l + r) / 2
 		if rsm.CalcNeedSamplesPerOutAmt(mid, mid*2) < inAmt {
@@ -41,7 +41,7 @@ func CalcMinOutSamplesPerInAmt2Waves(inAmt int, rsm goresampler.Resampler2Waves)
 	return out1, out2
 }
 
-func calcMinInSamplesAmt(inAmt int, rsm goresampler.Resampler) int {
+func calcMinInSamplesAmt(inAmt int64, rsm goresampler.Resampler) int64 {
 	return rsm.CalcNeedSamplesPerOutAmt(CalcMinOutSamplesPerInAmt(inAmt, rsm))
 }
 
@@ -76,7 +76,7 @@ func LoadAllRealWaves(waveInd int, pathToBaseWaves *string, samplesAmt *int, sam
 	gr := &sync.WaitGroup{}
 	for _, outRate := range []int{8000, 16000} {
 		for _, inRate := range []int{8000, 11000, 11025, 16000, 44000, 44100, 48000} {
-			for _, rsmT := range []goresampler.ResamplerT{goresampler.ResamplerConstExprT, goresampler.ResamplerSplineT, goresampler.ResamplerFFtT} {
+			for _, rsmT := range []goresampler.ResamplerT{goresampler.ResamplerConstExprT, goresampler.ResamplerSplineT, goresampler.ResamplerFFtT, goresampler.ResamplerSincT} {
 				if notStrictAmt != nil && rsmT != goresampler.ResamplerConstExprT && CheckRsmCompAb(goresampler.ResamplerConstExprT, inRate, outRate) == nil { // if not strict set - wave not depends on rsm type
 					continue
 				}
@@ -84,16 +84,16 @@ func LoadAllRealWaves(waveInd int, pathToBaseWaves *string, samplesAmt *int, sam
 					continue
 				}
 				gr.Add(1)
-				rsm, _, err := goresampler.NewResamplerAuto(inRate, outRate, rsmT, nil)
+				rsm, _, err := goresampler.NewResamplerAuto[goresampler.BaseResamplerOptions](inRate, outRate, rsmT, nil)
 				if err != nil {
 					panic(err)
 				}
 				if notStrictAmt != nil {
 					go loadRealWave(*notStrictAmt, rsmT, waveInd, inRate, outRate, res, mtx, gr, *pathToBaseWaves)
 				} else if samplesAmt != nil {
-					go loadRealWave(calcMinInSamplesAmt(*samplesAmt, rsm), rsmT, waveInd, inRate, outRate, res, mtx, gr, *pathToBaseWaves) // to resample > x frames
+					go loadRealWave(int(calcMinInSamplesAmt(int64(*samplesAmt), rsm)), rsmT, waveInd, inRate, outRate, res, mtx, gr, *pathToBaseWaves) // to resample > x frames
 				} else if samplesDurS != nil {
-					go loadRealWave(calcMinInSamplesAmt(*samplesDurS*inRate, rsm), rsmT, waveInd, inRate, outRate, res, mtx, gr, *pathToBaseWaves) // to resample > x frames
+					go loadRealWave(int(calcMinInSamplesAmt(int64(*samplesDurS)*int64(inRate), rsm)), rsmT, waveInd, inRate, outRate, res, mtx, gr, *pathToBaseWaves) // to resample > x frames
 				} else {
 					panic("expected one of samplesAmt or samplesDurS or notStrictAmt not nil")
 				}
@@ -109,9 +109,6 @@ func CheckRsmCompAb[T goresampler.ResamplerTI](rsmInd T, inRate, outRate int) er
 		return ErrUnimplemented
 	}
 	if rsmInd.String() == goresampler.ResamplerConstExprT.String() && (inRate == 11025 || inRate == 44100) {
-		return ErrNotExpResampling
-	}
-	if rsmInd.String() != goresampler.ResamplerConstExprT.String() && (inRate == 11000 || inRate == 44000) {
 		return ErrNotExpResampling
 	}
 	return nil

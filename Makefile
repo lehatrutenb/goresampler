@@ -1,22 +1,23 @@
+-include .env
 export last_commit_hash=$(shell git log --format="%H" -n 1)
 export baseWave1=./base_waves/base1/
 
 runPlotting:
-	python3 ./internal/test_utils/plots.py  -pib=./test/reports_large -pob=./test/plots -p1="rsm_spline" -p2="rsm_const" -p3="rsm_fft" -p4="rsm_batch" -p5="rsm_auto" --workers-amt=10 # it's written here cause running from go code looks dirty
+	python3 ./internal/test_utils/plots.py  -pib=./test/reports_large -pob=./test/plots -p1="rsm_spline" -p2="rsm_const" -p3="rsm_fft" -p4="rsm_batch" -p5="rsm_auto" -p6="rsm_sinc"  --workers-amt=5 # it's written here cause running from go code looks dirty
 
 runPlottingSlow:
-	python3 ./internal/test_utils/plots.py  -pib=./test/reports_large -pob=./test/plots -p1="rsm_spline" -p2="rsm_const" -p3="rsm_fft" -p4="rsm_batch" -p5="rsm_auto" --workers-amt=1
+	python3 ./internal/test_utils/plots.py  -pib=./test/reports_large -pob=./test/plots -p1="rsm_spline" -p2="rsm_const" -p3="rsm_fft" -p4="rsm_batch" -p5="rsm_auto" -p6="rsm_sinc" --workers-amt=1
 
 # if want to process later better to use -json, but I don't think I want to
 # care no -a option in first tee to overwrite last testRes
 runTest: clearTestDir
-	-go test -count=1 -coverprofile=.test_cover -benchmem -v ./... | tee ./test/!testRes
+	-go test -count=1 -coverprofile=.test_cover -timeout=30m -benchmem -v ./... | tee ./test/!testRes
 	mv .test_cover ./test/test_cover
 	make getTestCoverReports
 	make runPlotting
 
 runTestSlow: clearTestDir
-	-go test -count=1 -coverprofile=.test_cover -benchmem -v ./... | tee ./test/!testRes
+	-go test -count=1 -coverprofile=.test_cover -timeout=30m -benchmem -v ./... | tee ./test/!testRes
 	mv .test_cover ./test/test_cover
 	make getTestCoverReports
 	make runPlottingSlow
@@ -46,24 +47,28 @@ clearTestDir:
 	mkdir test/reports/rsm_fft
 	mkdir test/reports/rsm_batch
 	mkdir test/reports/rsm_auto
+	mkdir test/reports/rsm_sinc
 
 	mkdir test/reports_large/rsm_const
 	mkdir test/reports_large/rsm_spline
 	mkdir test/reports_large/rsm_fft
 	mkdir test/reports_large/rsm_batch
 	mkdir test/reports_large/rsm_auto
+	mkdir test/reports_large/rsm_sinc
 
 	mkdir test/plots/rsm_const
 	mkdir test/plots/rsm_spline
 	mkdir test/plots/rsm_fft
 	mkdir test/plots/rsm_batch
 	mkdir test/plots/rsm_auto
+	mkdir test/plots/rsm_sinc
 
 	mkdir test/audio/rsm_const
 	mkdir test/audio/rsm_spline
 	mkdir test/audio/rsm_fft
 	mkdir test/audio/rsm_batch
 	mkdir test/audio/rsm_auto
+	mkdir test/audio/rsm_sinc
 
 # CALC ONLY 1 CHANNEL IN RESAMPLING TIME
 runBenchmark:
@@ -76,10 +81,10 @@ runBenchmarkCustomWave:
 	go tool pprof -ignore="(.*tearDown)|(.*setup)|(.*New)|(.*Merge2Channels)" -relative_percentages  -pdf profile.bat > ./test/profile5e5Samples.pdf
 	mv profile.bat ./test/profile.bat
 
-runCreateAudioForReadmeTable:
+runCreateAudioForReadmeTable: clearReadmeDir
 	go test -bench=. ./internal/benchmark/benchmark_utils.go ./internal/benchmark/benchmark_test.go -args minsampledurationins=60
-	cp $$baseWave1/base1_8000.wav ./test/readme_audio/25_FFMPEGRsm_8000.mp4
-	cp $$baseWave1/base1_16000.wav ./test/readme_audio/26_FFMPEGRsm_16000.mp4
+	cp $$baseWave1/base1_8000.wav ./test/readme_audio/98_FFMPEGRsm_8000.mp4
+	cp $$baseWave1/base1_16000.wav ./test/readme_audio/99_FFMPEGRsm_16000.mp4
 
 # to gen paste audio urls downloaded to git to internal/benchmark/audio_urls
 runReadmeTableGen:

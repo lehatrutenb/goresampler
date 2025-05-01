@@ -2,11 +2,11 @@ package goresampler_test
 
 import (
 	"errors"
-	"sync"
 	"testing"
 
 	"github.com/lehatrutenb/goresampler"
 	testutils "github.com/lehatrutenb/goresampler/internal/test_utils"
+	"golang.org/x/sync/errgroup"
 
 	"fmt"
 
@@ -48,12 +48,11 @@ func (rsm *resamplerSpline2Waves) Resample(inp []int16) error {
 	return nil
 }
 func (rsm *resamplerSpline2Waves) calcNeedSamplesPerOutAmt(outAmt1, outAmt2 int) int {
-	var inAmt int
 	sr, _ := goresampler.NewResamplerSpline2Waves(rsm.inRate, rsm.outRate1, rsm.outRate2, nil)
-	inAmt, outAmt1, outAmt2 = sr.CalcInOutSamplesPerOutAmt(outAmt1, outAmt2)
-	rsm.resampled1 = make([]int16, outAmt1)
-	rsm.resampled2 = make([]int16, outAmt2)
-	return inAmt
+	inAmt, outAmtInt1, outAmtInt2 := sr.CalcInOutSamplesPerOutAmt(int64(outAmt1), int64(outAmt2))
+	rsm.resampled1 = make([]int16, outAmtInt1)
+	rsm.resampled2 = make([]int16, outAmtInt2)
+	return int(inAmt)
 }
 
 func (rsm resamplerSpline2Waves) OutLen() int {
@@ -94,7 +93,7 @@ func TestResampleSpline2WavesDiffErrsNotFall_SinWave(t *testing.T) {
 		}
 	}()
 
-	wg := &sync.WaitGroup{}
+	eg := &errgroup.Group{}
 	waveDurS := float64(20)
 	for _, inRate := range []int{8000, 11025, 16000, 44100, 48000} {
 		for _, outRate1 := range []int{8000, 16000} {
@@ -106,17 +105,15 @@ func TestResampleSpline2WavesDiffErrsNotFall_SinWave(t *testing.T) {
 							curOutRate = outRate2
 						}
 						rsm := resamplerSpline2Waves{}.New(inRate, outRate1, outRate2, &acc, useFirstWave)
-						opts := testutils.TestOpts{}.NewDefault().NotCalcDuration().WithWaitGroup(wg).NotFailOnHighDurationErr()
+						opts := testutils.TestOpts{}.NewDefault().NotCalcDuration().NotFailOnHighDurationErr()
 						var tObj testutils.TestObj = testutils.TestObj{}.New(testutils.CutWave{}.New(testutils.SinWave{}.New(0, waveDurS, inRate, curOutRate), 0, rsm.calcNeedSamplesPerOutAmt((int(waveDurS)-5)*outRate1, (int(waveDurS)-5)*outRate2)), &rsm, 1, t, opts)
-						wg.Add(1)
-						go tObj.Run()
+						eg.Go(tObj.Run)
 					}
 				}
 			}
 		}
 	}
-	wg.Wait()
-
+	assert.NoError(t, eg.Wait())
 }
 
 func runTestResampling(inRate, outRate1, outRate2 int, useFirstWave bool, t *testing.T) {

@@ -306,11 +306,14 @@ func (tObj *TestObj) Run() error {
 	tObj.Tres.Te.SqProc5 /= float64(tObj.Tw.OutLen())
 	tObj.Tres.Te.SqProc10 /= float64(tObj.Tw.OutLen())
 	tObj.Tres.Te.SqProc20 /= float64(tObj.Tw.OutLen())
+	tObj.Tres.CorrectW = CorrectW
 
 	// small check for resampler correctness
 	if tObj.opts.failOnHighErr && tObj.Tres.Te.SqProc20 >= 0.2 { // if too large error too often
 		tObj.t.Logf("too large error too often: tObj.Tres.Te.SqProc20=%f", tObj.Tres.Te.SqProc20)
 		tObj.t.Fail()
+	} else if !tObj.opts.failOnHighErr && tObj.Tres.Te.SqProc20 >= 0.2 {
+		tObj.t.Logf("IGNORED too large error too often: tObj.Tres.Te.SqProc20=%f", tObj.Tres.Te.SqProc20)
 	}
 
 	tCorr := int64(tObj.Tw.InLen()) * int64(tObj.Tw.OutRate())
@@ -323,8 +326,6 @@ func (tObj *TestObj) Run() error {
 		tObj.t.Logf("too large time difference: correct:%f got:%f", tCorrSec, tGotSec) // yes, cmp other values, print these
 		tObj.t.Fail()
 	}
-
-	tObj.Tres.CorrectW = CorrectW
 
 	return nil
 }
