@@ -69,12 +69,33 @@ Pure go library for sound resampling
     + fast
     ~ good quality of resampling
     ~ not very good tested on resampling not from {8000, 11025, 16000, 44100, 48000} or not to {8000, 16000}
-    - completely not perfect resampling in frequency domain (in theory)
-    - can't resample from any x to any y rates (but it is just for safe using)
 
 ## Before all
     In test/bechmark cases it is expected to have some base waves for tests/... so
     you may get them via
+
+```bash
+make downloadBaseSoundFilesForTests 
+```
+    Or create your own analog based on structure of mentioned example sound files (using make addBaseWave )
+
+#
+
+### To run tests use:
+Output:
+
+./test/plots/ - dir of plots done during testing
+
+./test/audio/ - dir of resampled sound files
+
+./test/!testRes - merged test output
+
+./test/reports/ - dir of reports of resampling with metrics counted during tests
+
+./test/reports/reports_large/ - dir same as reports , but with raw resampling waves too
+
+```bash
+=======
 
 ```bash
 make downloadBaseSoundFilesForTests 
