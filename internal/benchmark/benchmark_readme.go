@@ -24,25 +24,30 @@ func CreateReadmeAudioTable() error {
 	}
 
 	// create order same as audio urls appear in file
-	order := make([][3]int, 0, 3*5*2)
-	for _, rsmT := range []goresampler.ResamplerT{goresampler.ResamplerConstExprT, goresampler.ResamplerSplineT, goresampler.ResamplerFFtT} {
+	order := make([][3]int, 0, 4*5*2)
+	for rsmI, rsmT := range []goresampler.ResamplerT{goresampler.ResamplerConstExprT, goresampler.ResamplerSplineT, goresampler.ResamplerSincT, goresampler.ResamplerFFtT} {
 		for _, outRate := range []int{8000, 16000} {
 			for _, inRate := range []int{8000, 11000, 11025, 16000, 44000, 44100, 48000} {
 				if testutils.CheckRsmCompAb(rsmT, inRate, outRate) != nil || inRate == outRate {
 					continue
 				}
-				order = append(order, [3]int{int(rsmT) - 1, inRateConv[inRate], outRateConv[outRate]})
+				if rsmT != goresampler.ResamplerConstExprT {
+					if inRate == 11000 || inRate == 44000 {
+						continue
+					}
+				}
+				order = append(order, [3]int{rsmI, inRateConv[inRate], outRateConv[outRate]})
 			}
 		}
 	}
 
 	urls := make([][]string, 4*2)
 	for i := range urls {
-		urls[i] = make([]string, 5)
+		urls[i] = make([]string, 6)
 	}
 
 	dataS := strings.ReplaceAll(string(data), "\n\n", "\n")
-	for i := 0; i < 20; i++ {
+	for range 20 {
 		dataS = strings.ReplaceAll(dataS, "\n\n", "\n")
 	}
 	splittedData := strings.Split(dataS, "\n")
@@ -65,9 +70,9 @@ func CreateReadmeAudioTable() error {
 		urls[row][i+1] = elPref + url + elSuff
 
 		if k == 0 {
-			urls[row][4] = elPref + ffmpeg8000 + elSuff
+			urls[row][5] = elPref + ffmpeg8000 + elSuff
 		} else {
-			urls[row][4] = elPref + ffmpeg16000 + elSuff
+			urls[row][5] = elPref + ffmpeg16000 + elSuff
 		}
 
 		urls[row][0] = fmt.Sprintf("%d to %d", rInRateConv[j][1], rOutRateConv[k])
@@ -77,7 +82,7 @@ func CreateReadmeAudioTable() error {
 	md := bytes.NewBuffer(buf)
 	err = markdown.NewMarkdown(md).H2("Resample results").
 		Table(markdown.TableSet{
-			Header: []string{"/", goresampler.ResamplerT(1).String(), goresampler.ResamplerT(2).String(), goresampler.ResamplerT(3).String(), "FFMPEG resampling"},
+			Header: []string{"/", goresampler.ResamplerT(1).String(), goresampler.ResamplerT(2).String(), goresampler.ResamplerT(6).String(), goresampler.ResamplerT(3).String(), "FFMPEG resampling"},
 			Rows:   urls,
 		}).Build()
 

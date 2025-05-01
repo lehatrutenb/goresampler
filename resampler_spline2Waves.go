@@ -14,22 +14,22 @@ try to find batch input amt to have less err (0..1) rate than given maxErrRateP
 if failed to find such batch to fit maxErrRate,  second arg is false, otherwise true (but even with false, resampler is fine to use)
 */
 
-func NewResamplerSpline2Waves(inRate, outRate1, outRate2 int, maxErrRateP *float64) (ResamplerSpline2Waves, bool) {
-	rsm1, ok1 := NewResamplerSpline(inRate, outRate1, maxErrRateP)
-	rsm2, ok2 := NewResamplerSpline(inRate, outRate2, maxErrRateP)
+func NewResamplerSpline2Waves(inRate, outRate1, outRate2 int, opts *BaseResamplerOptions) (ResamplerSpline2Waves, bool) {
+	rsm1, ok1 := NewResamplerSpline(inRate, outRate1, opts)
+	rsm2, ok2 := NewResamplerSpline(inRate, outRate2, opts)
 	return ResamplerSpline2Waves{rsm1, rsm2}, ok1 && ok2
 }
 
-func (sw ResamplerSpline2Waves) CalcNeedSamplesPerOutAmt(outAmt1, outAmt2 int) int {
+func (sw ResamplerSpline2Waves) CalcNeedSamplesPerOutAmt(outAmt1, outAmt2 int64) int64 {
 	return max(sw.rsm1.CalcNeedSamplesPerOutAmt(outAmt1), sw.rsm2.CalcNeedSamplesPerOutAmt(outAmt2))
 }
 
 // not really need so strict - like inAmt % sw.batchInAmt == 0 , but it's garanted
-func (sw ResamplerSpline2Waves) calcOutSamplesPerInAmt(inAmt int) (int, int) {
+func (sw ResamplerSpline2Waves) calcOutSamplesPerInAmt(inAmt int64) (int64, int64) {
 	return sw.rsm1.calcOutSamplesPerInAmt(inAmt), sw.rsm2.calcOutSamplesPerInAmt(inAmt)
 }
 
-func (rsm ResamplerSpline2Waves) CalcInOutSamplesPerOutAmt(outAmt1, outAmt2 int) (int, int, int) {
+func (rsm ResamplerSpline2Waves) CalcInOutSamplesPerOutAmt(outAmt1, outAmt2 int64) (int64, int64, int64) {
 	in1 := rsm.rsm1.CalcNeedSamplesPerOutAmt(outAmt1)
 	in2 := rsm.rsm2.CalcNeedSamplesPerOutAmt(outAmt2)
 	in := max(in1, in2)
@@ -49,8 +49,8 @@ func (sw ResamplerSpline2Waves) ResampleAll(in, out1, out2 []int16) error {
 
 func (sw ResamplerSpline2Waves) Resample(in, out1, out2 []int16) error {
 	{
-		cIn, cOut1, cOut2 := sw.CalcInOutSamplesPerOutAmt(len(out1), len(out2))
-		if cIn != len(in) || cOut1 != len(out1) || cOut2 != len(out2) {
+		cIn, cOut1, cOut2 := sw.CalcInOutSamplesPerOutAmt(int64(len(out1)), int64(len(out2)))
+		if cIn != int64(len(in)) || cOut1 != int64(len(out1)) || cOut2 != int64(len(out2)) {
 			return ErrIncorrectInLen
 		}
 	}
