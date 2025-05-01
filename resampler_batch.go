@@ -10,6 +10,9 @@ var (
 	// ErrNotEnoughSamples indicates that in ResampleBatch not enough buffered data
 	// to get requested samples amount
 	ErrNotEnoughSamples = errors.New("need more samples to get that size of batch")
+	// ErrNotEnoughSamples indicates that inRate or outRate with such resampling error
+	// are trying to create too large arrays to resample
+	ErrIncorrectResamplingParams = errors.New("such values of inRate, outRate, resampling error, resampling type are incorrect")
 )
 
 // ResampleBatch provides resampling within push (GetBatch/GetLargeBatch) and pull (AddBatch)
@@ -44,14 +47,18 @@ use that func when len(out) is large (~ >1e5)
 */
 
 func (rsm *ResampleBatch) resampleMore(minRsmAmt int) error {
-	inAmt, outAmt := rsm.rsm.CalcInOutSamplesPerOutAmt(minRsmAmt)
-	if inAmt > len(rsm.in) {
+	inAmt, outAmt := rsm.rsm.CalcInOutSamplesPerOutAmt(int64(minRsmAmt))
+	if inAmt > int64(len(rsm.in)) {
 		return ErrNotEnoughSamples
 	}
 
+	if inAmt >= int64(MaxResamplingBatchLen) || outAmt >= int64(MaxResamplingBatchLen) {
+		return ErrIncorrectResamplingParams
+	}
+
 	curOutLen := len(rsm.out)
-	rsm.out = slices.Grow(rsm.out, outAmt)[:len(rsm.out)+outAmt]
-	if err := rsm.rsm.Resample(rsm.in[:inAmt], rsm.out[curOutLen:curOutLen+outAmt]); err != nil {
+	rsm.out = slices.Grow(rsm.out, int(outAmt))[:len(rsm.out)+int(outAmt)]
+	if err := rsm.rsm.Resample(rsm.in[:inAmt], rsm.out[curOutLen:curOutLen+int(outAmt)]); err != nil {
 		return err
 	}
 	rsm.in = rsm.in[inAmt:]
@@ -118,7 +125,7 @@ func (rsm *ResampleBatch) Len() int {
 func (rsm *ResampleBatch) ResampleAllInBuf() error {
 	curOutLen := len(rsm.out)
 	inAmt := len(rsm.in)
-	outAmt := rsm.rsmTails.calcOutSamplesPerInAmt(inAmt)
+	outAmt := int(rsm.rsmTails.calcOutSamplesPerInAmt(int64(inAmt)))
 	rsm.out = slices.Grow(rsm.out, outAmt)[:len(rsm.out)+outAmt]
 	if err := rsm.rsmTails.ResampleAll(rsm.in[:inAmt], rsm.out[curOutLen:curOutLen+outAmt]); err != nil {
 		return err

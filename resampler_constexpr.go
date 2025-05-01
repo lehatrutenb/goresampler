@@ -79,15 +79,15 @@ func NewRsm16To8L() Resampler16To8L {
 	return rsm
 }
 
-func (Resampler16To8L) CalcNeedSamplesPerOutAmt(outAmt int) int {
+func (Resampler16To8L) CalcNeedSamplesPerOutAmt(outAmt int64) int64 {
 	return outAmt * 2
 }
 
-func (Resampler16To8L) calcOutSamplesPerInAmt(inAmt int) int {
+func (Resampler16To8L) calcOutSamplesPerInAmt(inAmt int64) int64 {
 	return inAmt / 2
 }
 
-func (rsm Resampler16To8L) CalcInOutSamplesPerOutAmt(outAmt int) (int, int) {
+func (rsm Resampler16To8L) CalcInOutSamplesPerOutAmt(outAmt int64) (int64, int64) {
 	in := rsm.CalcNeedSamplesPerOutAmt(outAmt)
 	return in, rsm.calcOutSamplesPerInAmt(in)
 }
@@ -177,15 +177,15 @@ func NewRsm8To16L() Resampler8To16L {
 	return rsm
 }
 
-func (Resampler8To16L) CalcNeedSamplesPerOutAmt(outAmt int) int {
+func (Resampler8To16L) CalcNeedSamplesPerOutAmt(outAmt int64) int64 {
 	return (outAmt + 1) / 2
 }
 
-func (Resampler8To16L) calcOutSamplesPerInAmt(inAmt int) int {
+func (Resampler8To16L) calcOutSamplesPerInAmt(inAmt int64) int64 {
 	return inAmt * 2
 }
 
-func (rsm Resampler8To16L) CalcInOutSamplesPerOutAmt(outAmt int) (int, int) {
+func (rsm Resampler8To16L) CalcInOutSamplesPerOutAmt(outAmt int64) (int64, int64) {
 	in := rsm.CalcNeedSamplesPerOutAmt(outAmt)
 	return in, rsm.calcOutSamplesPerInAmt(in)
 }
@@ -843,16 +843,16 @@ func (rsm Resampler48To8L) Reset() {
 	}
 }
 
-func (Resampler48To8L) CalcNeedSamplesPerOutAmt(outAmt int) int {
-	divider := 480
+func (Resampler48To8L) CalcNeedSamplesPerOutAmt(outAmt int64) int64 {
+	divider := int64(480)
 	return ((outAmt*6 + divider - 1) / divider) * divider
 }
 
-func (Resampler48To8L) calcOutSamplesPerInAmt(inAmt int) int {
+func (Resampler48To8L) calcOutSamplesPerInAmt(inAmt int64) int64 {
 	return inAmt / 6
 }
 
-func (rsm Resampler48To8L) CalcInOutSamplesPerOutAmt(outAmt int) (int, int) {
+func (rsm Resampler48To8L) CalcInOutSamplesPerOutAmt(outAmt int64) (int64, int64) {
 	in := rsm.CalcNeedSamplesPerOutAmt(outAmt)
 	return in, rsm.calcOutSamplesPerInAmt(in)
 }
@@ -906,16 +906,16 @@ func (rsm Resampler48To16L) Reset() {
 	}
 }
 
-func (Resampler48To16L) CalcNeedSamplesPerOutAmt(outAmt int) int {
-	divider := 480
+func (Resampler48To16L) CalcNeedSamplesPerOutAmt(outAmt int64) int64 {
+	divider := int64(480)
 	return ((outAmt*3 + divider - 1) / divider) * divider
 }
 
-func (Resampler48To16L) calcOutSamplesPerInAmt(inAmt int) int {
+func (Resampler48To16L) calcOutSamplesPerInAmt(inAmt int64) int64 {
 	return inAmt / 3
 }
 
-func (rsm Resampler48To16L) CalcInOutSamplesPerOutAmt(outAmt int) (int, int) {
+func (rsm Resampler48To16L) CalcInOutSamplesPerOutAmt(outAmt int64) (int64, int64) {
 	in := rsm.CalcNeedSamplesPerOutAmt(outAmt)
 	return in, rsm.calcOutSamplesPerInAmt(in)
 }
@@ -964,16 +964,16 @@ func (rsm Resampler11To8L) Reset() {
 	}
 }
 
-func (Resampler11To8L) CalcNeedSamplesPerOutAmt(outAmt int) int {
-	divider := 220
+func (Resampler11To8L) CalcNeedSamplesPerOutAmt(outAmt int64) int64 {
+	divider := int64(220)
 	return (((outAmt*11)/8 + divider - 1) / divider) * divider
 }
 
-func (Resampler11To8L) calcOutSamplesPerInAmt(inAmt int) int {
+func (Resampler11To8L) calcOutSamplesPerInAmt(inAmt int64) int64 {
 	return (inAmt / 11) * 8
 }
 
-func (rsm Resampler11To8L) CalcInOutSamplesPerOutAmt(outAmt int) (int, int) {
+func (rsm Resampler11To8L) CalcInOutSamplesPerOutAmt(outAmt int64) (int64, int64) {
 	in := rsm.CalcNeedSamplesPerOutAmt(outAmt)
 	return in, rsm.calcOutSamplesPerInAmt(in)
 }
@@ -1029,16 +1029,16 @@ func (rsm Resampler11To16L) Reset() {
 	}
 }
 
-func (Resampler11To16L) CalcNeedSamplesPerOutAmt(outAmt int) int {
-	divider := 110
+func (Resampler11To16L) CalcNeedSamplesPerOutAmt(outAmt int64) int64 {
+	divider := int64(110)
 	return (((outAmt*11)/16 + divider - 1) / divider) * divider
 }
 
-func (Resampler11To16L) calcOutSamplesPerInAmt(inAmt int) int {
+func (Resampler11To16L) calcOutSamplesPerInAmt(inAmt int64) int64 {
 	return (inAmt * 16) / 11
 }
 
-func (rsm Resampler11To16L) CalcInOutSamplesPerOutAmt(outAmt int) (int, int) {
+func (rsm Resampler11To16L) CalcInOutSamplesPerOutAmt(outAmt int64) (int64, int64) {
 	in := rsm.CalcNeedSamplesPerOutAmt(outAmt)
 	return in, rsm.calcOutSamplesPerInAmt(in)
 }
@@ -1099,16 +1099,16 @@ func (rsm Resampler44To8L) Reset() {
 	}
 }
 
-func (Resampler44To8L) CalcNeedSamplesPerOutAmt(outAmt int) int {
-	divider := 220
+func (Resampler44To8L) CalcNeedSamplesPerOutAmt(outAmt int64) int64 {
+	divider := int64(220)
 	return (((outAmt*11)/2 + divider - 1) / divider) * divider
 }
 
-func (Resampler44To8L) calcOutSamplesPerInAmt(inAmt int) int {
+func (Resampler44To8L) calcOutSamplesPerInAmt(inAmt int64) int64 {
 	return (inAmt * 2) / 11
 }
 
-func (rsm Resampler44To8L) CalcInOutSamplesPerOutAmt(outAmt int) (int, int) {
+func (rsm Resampler44To8L) CalcInOutSamplesPerOutAmt(outAmt int64) (int64, int64) {
 	in := rsm.CalcNeedSamplesPerOutAmt(outAmt)
 	return in, rsm.calcOutSamplesPerInAmt(in)
 }
@@ -1162,16 +1162,16 @@ func (rsm Resampler44To16L) Reset() {
 	}
 }
 
-func (Resampler44To16L) CalcNeedSamplesPerOutAmt(outAmt int) int {
-	divider := 220
+func (Resampler44To16L) CalcNeedSamplesPerOutAmt(outAmt int64) int64 {
+	divider := int64(220)
 	return (((outAmt*11)/4 + divider - 1) / divider) * divider
 }
 
-func (Resampler44To16L) calcOutSamplesPerInAmt(inAmt int) int {
+func (Resampler44To16L) calcOutSamplesPerInAmt(inAmt int64) int64 {
 	return (inAmt * 4) / 11
 }
 
-func (rsm Resampler44To16L) CalcInOutSamplesPerOutAmt(outAmt int) (int, int) {
+func (rsm Resampler44To16L) CalcInOutSamplesPerOutAmt(outAmt int64) (int64, int64) {
 	in := rsm.CalcNeedSamplesPerOutAmt(outAmt)
 	return in, rsm.calcOutSamplesPerInAmt(in)
 }
@@ -1195,13 +1195,13 @@ type ResamplerNotChange struct {
 func NewRsmNotChange() ResamplerNotChange {
 	return ResamplerNotChange{}
 }
-func (ResamplerNotChange) CalcNeedSamplesPerOutAmt(outAmt int) int {
+func (ResamplerNotChange) CalcNeedSamplesPerOutAmt(outAmt int64) int64 {
 	return outAmt
 }
-func (ResamplerNotChange) calcOutSamplesPerInAmt(inAmt int) int {
+func (ResamplerNotChange) calcOutSamplesPerInAmt(inAmt int64) int64 {
 	return inAmt
 }
-func (ResamplerNotChange) CalcInOutSamplesPerOutAmt(outAmt int) (int, int) {
+func (ResamplerNotChange) CalcInOutSamplesPerOutAmt(outAmt int64) (int64, int64) {
 	return outAmt, outAmt
 }
 func (ResamplerNotChange) Reset() {

@@ -38,7 +38,7 @@ func (bmr BenchmarkerBatch) New(rsmT goresampler.Resampler2WavesT, inRate, outRa
 		b.FailNow()
 	}
 
-	rsm, _, err := goresampler.NewResamplerAuto2Waves(inRate, outRate1, outRate2, rsmT, nil)
+	rsm, _, err := goresampler.NewResamplerAuto2Waves[goresampler.BaseResamplerOptions](inRate, outRate1, outRate2, rsmT, nil)
 	if err != nil {
 		b.Error(err)
 		b.FailNow()
@@ -64,7 +64,7 @@ func (bmr BenchmarkerBatch) New(rsmT goresampler.Resampler2WavesT, inRate, outRa
 func (bmr BenchmarkerBatch) setup() ([]int16, []int16, [2][]int16, [2][]int16) {
 	in1 := utils.GetWithStep(bmr.in, 0, 2)
 	in2 := utils.GetWithStep(bmr.in, 1, 2)
-	outLen1, outLen2 := testutils.CalcMinOutSamplesPerInAmt2Waves(len(in1), bmr.rsmIns)
+	outLen1, outLen2 := testutils.CalcMinOutSamplesPerInAmt2Waves(int64(len(in1)), bmr.rsmIns)
 	out1 := [2][]int16{make([]int16, outLen1), make([]int16, outLen2)}
 	out2 := [2][]int16{make([]int16, outLen1), make([]int16, outLen2)}
 	return in1, in2, out1, out2

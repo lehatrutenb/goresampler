@@ -6,11 +6,11 @@ import (
 	"log"
 	"math"
 	"slices"
-	"sync"
 	"testing"
 
 	goresampler "github.com/lehatrutenb/goresampler"
 	testutils "github.com/lehatrutenb/goresampler/internal/test_utils"
+	"golang.org/x/sync/errgroup"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -41,7 +41,7 @@ type ResampleBatchTest struct {
 }
 
 func (ResampleBatchTest) New(inRate, outRate int, rsmT goresampler.ResamplerT, opts batchWorkType) *ResampleBatchTest {
-	rsm, _, err := goresampler.NewResamplerAuto(inRate, outRate, rsmT, nil)
+	rsm, _, err := goresampler.NewResamplerAuto[goresampler.BaseResamplerOptions](inRate, outRate, rsmT, nil)
 	if err != nil {
 		panic(err)
 	}
@@ -124,7 +124,7 @@ func TestResampleBatch_SinWave(t *testing.T) {
 	}()
 
 	waveDurS := float64(20)
-	for _, rsmT := range []goresampler.ResamplerT{goresampler.ResamplerConstExprT, goresampler.ResamplerSplineT, goresampler.ResamplerFFtT} {
+	for _, rsmT := range []goresampler.ResamplerT{goresampler.ResamplerConstExprT, goresampler.ResamplerSplineT, goresampler.ResamplerSincT, goresampler.ResamplerFFtT} {
 		for _, inRate := range []int{8000, 11000, 11025, 16000, 44000, 44100, 48000} {
 			for _, outRate := range []int{8000, 16000} {
 				if testutils.CheckRsmCompAb(rsmT, inRate, outRate) != nil {
@@ -154,7 +154,7 @@ func TestResampleBatch_Reset(t *testing.T) {
 	}()
 
 	waveDurS := float64(60)
-	for _, rsmT := range []goresampler.ResamplerT{goresampler.ResamplerConstExprT, goresampler.ResamplerSplineT, goresampler.ResamplerFFtT} {
+	for _, rsmT := range []goresampler.ResamplerT{goresampler.ResamplerConstExprT, goresampler.ResamplerSplineT, goresampler.ResamplerSincT, goresampler.ResamplerFFtT} {
 		for _, inRate := range []int{8000, 11000, 11025, 16000, 44000, 44100, 48000} {
 			for _, outRate := range []int{8000, 16000} {
 				if testutils.CheckRsmCompAb(rsmT, inRate, outRate) != nil {
@@ -167,7 +167,7 @@ func TestResampleBatch_Reset(t *testing.T) {
 				waveLenGet := (int(waveDurS) - 40) * outRate
 				waves[0], err = testutils.GetFullInWave(testutils.SinWave{}.New(0, waveDurS, inRate, outRate))
 				waves[1], _ = testutils.GetFullInWave(testutils.SinWave{}.New(0, waveDurS, inRate, outRate))
-				inRsm, _, _ := goresampler.NewResamplerAuto(inRate, outRate, rsmT, nil)
+				inRsm, _, _ := goresampler.NewResamplerAuto[goresampler.BaseResamplerOptions](inRate, outRate, rsmT, nil)
 				rsm := goresampler.NewResampleBatch(inRsm, inRate, outRate)
 				for attemptInd := 0; attemptInd < 2; attemptInd++ {
 					rsm.Reset()
@@ -198,6 +198,59 @@ func fillArr[T any](arr []T, val T) {
 	}
 }
 
+func runCornerCases(t *testing.T, waveDurS int, inRate int, outRate int, rsmT goresampler.ResamplerT) {
+	waveLen := waveDurS * inRate
+	waveLenGet := (waveDurS - 40) * outRate
+	var err error
+	waves := make([][]int16, 5)
+	res := make([][]int16, 5)
+
+	for i := 0; i < len(waves); i++ {
+		waves[i] = make([]int16, waveLen)
+	}
+	fillArr(waves[1], math.MaxInt16)
+	fillArr(waves[2], math.MinInt16)
+	for i := 0; i < len(waves[3]); i += 2 {
+		waves[3][i] = math.MaxInt16
+		waves[3][i+1] = math.MinInt16
+	}
+	for i := 0; i < len(waves[4]); i += 2 {
+		waves[4][i] = math.MaxInt16
+		waves[4][i+1] = math.MinInt16
+	}
+
+	inRsm, _, _ := goresampler.NewResamplerAuto[goresampler.BaseResamplerOptions](inRate, outRate, rsmT, nil)
+	rsm := goresampler.NewResampleBatch(inRsm, inRate, outRate)
+	for waveInd := 0; waveInd < len(waves); waveInd++ {
+		rsm.Reset()
+		if !assert.NoError(t, err) {
+			t.Error(err)
+		}
+		err = rsm.AddBatch(waves[waveInd])
+		if !assert.NoError(t, err) {
+			t.Error(err)
+		}
+		res[waveInd] = make([]int16, waveLenGet)
+		err = rsm.GetBatch(res[waveInd])
+		if !assert.NoError(t, err) {
+			t.Error(err)
+		}
+	}
+
+	for i := 0; i < len(res[1]); i++ { // check not hidden overflows
+		if !assert.GreaterOrEqual(t, res[1][i], int16(0)) {
+			t.FailNow()
+			break
+		}
+	}
+	for i := 0; i < len(res[2]); i++ { // check not hidden overflows
+		if !assert.LessOrEqual(t, res[2][i], int16(0)) {
+			t.FailNow()
+			break
+		}
+	}
+}
+
 func TestResampleBatch_CornerValues(t *testing.T) {
 	defer func() {
 		if r := recover(); r != nil {
@@ -206,66 +259,14 @@ func TestResampleBatch_CornerValues(t *testing.T) {
 	}()
 
 	waveDurS := 60
-	for _, rsmT := range []goresampler.ResamplerT{goresampler.ResamplerConstExprT, goresampler.ResamplerSplineT, goresampler.ResamplerFFtT} {
+	for _, rsmT := range []goresampler.ResamplerT{goresampler.ResamplerConstExprT, goresampler.ResamplerSplineT, goresampler.ResamplerSincT, goresampler.ResamplerFFtT} {
 		for _, inRate := range []int{8000, 11000, 11025, 16000, 44000, 44100, 48000} {
 			for _, outRate := range []int{8000, 16000} {
 				if testutils.CheckRsmCompAb(rsmT, inRate, outRate) != nil {
 					continue
 				}
 				log.Printf("Testing %s from %d to %d\n", rsmT.String(), inRate, outRate)
-
-				waveLen := waveDurS * inRate
-				waveLenGet := (waveDurS - 40) * outRate
-				var err error
-				waves := make([][]int16, 5)
-				res := make([][]int16, 5)
-
-				for i := 0; i < len(waves); i++ {
-					waves[i] = make([]int16, waveLen)
-				}
-				fillArr(waves[1], math.MaxInt16)
-				fillArr(waves[2], math.MinInt16)
-				for i := 0; i < len(waves[3]); i += 2 {
-					waves[3][i] = math.MaxInt16
-					waves[3][i+1] = math.MinInt16
-				}
-				for i := 0; i < len(waves[4]); i += 2 {
-					waves[4][i] = math.MaxInt16
-					waves[4][i+1] = math.MinInt16
-				}
-
-				inRsm, _, _ := goresampler.NewResamplerAuto(inRate, outRate, rsmT, nil)
-				rsm := goresampler.NewResampleBatch(inRsm, inRate, outRate)
-				for waveInd := 0; waveInd < len(waves); waveInd++ {
-					rsm.Reset()
-					if !assert.NoError(t, err) {
-						t.Error(err)
-					}
-					err = rsm.AddBatch(waves[waveInd])
-					if !assert.NoError(t, err) {
-						t.Error(err)
-					}
-					res[waveInd] = make([]int16, waveLenGet)
-					err = rsm.GetBatch(res[waveInd])
-					if !assert.NoError(t, err) {
-						t.Error(err)
-					}
-				}
-
-				for i := 0; i < len(res[1]); i++ { // check not hidden overflows
-					if !assert.GreaterOrEqual(t, res[1][i], int16(0)) {
-						log.Println("bad")
-						//t.FailNow()
-						break
-					}
-				}
-				for i := 0; i < len(res[2]); i++ { // check not hidden overflows
-					if !assert.LessOrEqual(t, res[2][i], int16(0)) {
-						log.Println("bad")
-						//t.FailNow()
-						break
-					}
-				}
+				runCornerCases(t, waveDurS, inRate, outRate, rsmT)
 			}
 		}
 	}
@@ -280,7 +281,7 @@ func TestResampleBatch_SinWave2Ch(t *testing.T) {
 	}()
 
 	waveDurS := float64(20)
-	for _, rsmT := range []goresampler.ResamplerT{goresampler.ResamplerConstExprT, goresampler.ResamplerSplineT, goresampler.ResamplerFFtT} {
+	for _, rsmT := range []goresampler.ResamplerT{goresampler.ResamplerConstExprT, goresampler.ResamplerSplineT, goresampler.ResamplerSincT, goresampler.ResamplerFFtT} {
 		for _, inRate := range []int{8000, 11000, 11025, 16000, 44000, 44100, 48000} {
 			for _, outRate := range []int{8000, 16000} {
 				if testutils.CheckRsmCompAb(rsmT, inRate, outRate) != nil {
@@ -309,8 +310,8 @@ func TestResampleBatchDiffAddGetTypes_SinWave(t *testing.T) {
 	}()
 
 	waveDurS := float64(20)
-	wg := &sync.WaitGroup{}
-	for _, rsmT := range []goresampler.ResamplerT{goresampler.ResamplerConstExprT, goresampler.ResamplerSplineT, goresampler.ResamplerFFtT} {
+	eg := &errgroup.Group{}
+	for _, rsmT := range []goresampler.ResamplerT{goresampler.ResamplerConstExprT, goresampler.ResamplerSplineT, goresampler.ResamplerSincT, goresampler.ResamplerFFtT} {
 		for _, inRate := range []int{8000, 11000, 11025, 16000, 44000, 44100, 48000} {
 			for _, outRate := range []int{8000, 16000} {
 				for _, addLB := range []bool{false, true} {
@@ -320,21 +321,19 @@ func TestResampleBatchDiffAddGetTypes_SinWave(t *testing.T) {
 								continue
 							}
 							rsm := ResampleBatchTest{}.New(inRate, outRate, rsmT, setParams(addLB, getLB, 1000, 480, resampleTail))
-							opts := testutils.TestOpts{}.NewDefault().WithWaitGroup(wg)
+							opts := testutils.TestOpts{}.NewDefault()
 							if resampleTail {
 								opts.NotFailOnHighDurationErr()
 							}
 							var tObj testutils.TestObj = testutils.TestObj{}.New(testutils.CutWave{}.New(testutils.SinWave{}.New(0, waveDurS, inRate, outRate), 0, inAmt), rsm, 1, t, opts)
-							wg.Add(1)
-							go tObj.Run()
+							eg.Go(tObj.Run)
 						}
 					}
 				}
 			}
 		}
+		assert.NoError(t, eg.Wait())
 	}
-
-	wg.Wait()
 }
 
 func TestResampleBatchDiffAddAmt_SinWave(t *testing.T) {
@@ -346,8 +345,8 @@ func TestResampleBatchDiffAddAmt_SinWave(t *testing.T) {
 	}()
 
 	waveDurS := float64(20)
-	wg := &sync.WaitGroup{}
-	for _, rsmT := range []goresampler.ResamplerT{goresampler.ResamplerConstExprT, goresampler.ResamplerSplineT, goresampler.ResamplerFFtT} {
+	eg := &errgroup.Group{}
+	for _, rsmT := range []goresampler.ResamplerT{goresampler.ResamplerConstExprT, goresampler.ResamplerSplineT, goresampler.ResamplerSincT, goresampler.ResamplerFFtT} {
 		for _, inRate := range []int{8000, 11000, 11025, 16000, 44000, 44100, 48000} {
 			for _, outRate := range []int{8000, 16000} {
 				if testutils.CheckRsmCompAb(rsmT, inRate, outRate) != nil {
@@ -360,15 +359,14 @@ func TestResampleBatchDiffAddAmt_SinWave(t *testing.T) {
 					}
 					inWave := testutils.CutWave{}.New(testutils.SinWave{}.New(0, waveDurS, inRate, outRate), 0, curInAmt)
 					rsm := ResampleBatchTest{}.New(inRate, outRate, rsmT, setParams(false, false, addAmt, 480, false))
-					var tObj testutils.TestObj = testutils.TestObj{}.New(inWave, rsm, 1, t, testutils.TestOpts{}.NewDefault().WithWaitGroup(wg))
-					wg.Add(1)
-					go tObj.Run()
+					var tObj testutils.TestObj = testutils.TestObj{}.New(inWave, rsm, 1, t, testutils.TestOpts{}.NewDefault())
+
+					eg.Go(tObj.Run)
 				}
 			}
 		}
+		assert.NoError(t, eg.Wait())
 	}
-
-	wg.Wait()
 }
 
 func TestResampleBatch_RealWave(t *testing.T) {
@@ -384,10 +382,11 @@ func TestResampleBatch_RealWave(t *testing.T) {
 	}()
 
 	waves := testutils.LoadAllRealWaves(0, nil, nil, nil, &inAmt)
+	eg := &errgroup.Group{}
 
 	for _, inRate := range []int{8000, 11000, 11025, 16000, 44000, 44100, 48000} {
 		for _, outRate := range []int{8000, 16000} {
-			for _, rsmT := range []goresampler.ResamplerT{goresampler.ResamplerConstExprT, goresampler.ResamplerSplineT, goresampler.ResamplerFFtT} {
+			for _, rsmT := range []goresampler.ResamplerT{goresampler.ResamplerConstExprT, goresampler.ResamplerSplineT, goresampler.ResamplerSincT, goresampler.ResamplerFFtT} {
 				if testutils.CheckRsmCompAb(rsmT, inRate, outRate) != nil {
 					continue
 				}
@@ -399,12 +398,10 @@ func TestResampleBatch_RealWave(t *testing.T) {
 					waveRsmT = goresampler.ResamplerConstExprT
 				}
 				var tObj testutils.TestObj = testutils.TestObj{}.New(waves[testutils.GetWaveName(waveRsmT, inRate, outRate)], rsm, 1, t, testutils.TestOpts{}.NewDefault().NotFailOnHighErr())
-				err := tObj.Run()
-				if !assert.NoError(t, err, fmt.Sprintf("failed to convert via %s from %d to %d", rsmT, inRate, outRate)) {
-					t.Error(err)
-				}
+				eg.Go(tObj.Run)
 			}
 		}
+		assert.NoError(t, eg.Wait())
 	}
 }
 
@@ -424,7 +421,7 @@ func TestResampleBatchSaveReports_RealWave(t *testing.T) {
 
 	for _, inRate := range []int{8000, 11000, 11025, 16000, 44000, 44100, 48000} {
 		for _, outRate := range []int{8000, 16000} {
-			for _, rsmT := range []goresampler.ResamplerT{goresampler.ResamplerConstExprT, goresampler.ResamplerSplineT, goresampler.ResamplerFFtT} {
+			for _, rsmT := range []goresampler.ResamplerT{goresampler.ResamplerConstExprT, goresampler.ResamplerSplineT, goresampler.ResamplerSincT, goresampler.ResamplerFFtT} {
 				if testutils.CheckRsmCompAb(rsmT, inRate, outRate) != nil {
 					continue
 				}
@@ -451,7 +448,7 @@ func TestResampleBatchSaveReports_RealWave(t *testing.T) {
 
 func ExampleNewResampleBatch() {
 	rsmT := goresampler.ResamplerBestFitT
-	rsm, ok, err := goresampler.NewResamplerAuto(16000, 8000, rsmT, nil)
+	rsm, ok, err := goresampler.NewResamplerAuto[goresampler.BaseResamplerOptions](16000, 8000, rsmT, nil)
 	if !ok {
 		fmt.Printf("failed fo fit base %s error sec difference in resampling from %d to %d", rsmT.String(), 16000, 8000)
 		return
@@ -471,7 +468,7 @@ func ExampleResampleBatch_AddBatch() {
 	defer func() { _ = err }()
 
 	rsmT := goresampler.ResamplerBestFitT
-	rsm, _, err := goresampler.NewResamplerAuto(16000, 8000, rsmT, nil)
+	rsm, _, err := goresampler.NewResamplerAuto[goresampler.BaseResamplerOptions](16000, 8000, rsmT, nil)
 
 	rsmBatch := goresampler.NewResampleBatch(rsm, 16000, 8000)
 
@@ -491,7 +488,7 @@ func ExampleResampleBatch_GetBatch() {
 	defer func() { _ = err }()
 
 	rsmT := goresampler.ResamplerBestFitT
-	rsm, _, err := goresampler.NewResamplerAuto(16000, 8000, rsmT, nil)
+	rsm, _, err := goresampler.NewResamplerAuto[goresampler.BaseResamplerOptions](16000, 8000, rsmT, nil)
 
 	rsmBatch := goresampler.NewResampleBatch(rsm, 16000, 8000)
 
@@ -511,7 +508,7 @@ func ExampleResampleBatch_GetLargeBatch() {
 	defer func() { _ = err }()
 
 	rsmT := goresampler.ResamplerBestFitT
-	rsm, _, err := goresampler.NewResamplerAuto(16000, 8000, rsmT, nil)
+	rsm, _, err := goresampler.NewResamplerAuto[goresampler.BaseResamplerOptions](16000, 8000, rsmT, nil)
 
 	rsmBatch := goresampler.NewResampleBatch(rsm, 16000, 8000)
 
@@ -532,7 +529,7 @@ func ExampleResampleBatch_UnresampledUngetInAmt() {
 	defer func() { _ = err }()
 
 	errRate := 1e-6 // fix err rate not to fail after change of it inside resampler
-	rsm, _, err := goresampler.NewResamplerAuto(8000, 16000, goresampler.ResamplerBestFitT, &errRate)
+	rsm, _, err := goresampler.NewResamplerAuto(8000, 16000, goresampler.ResamplerBestFitT, &goresampler.BaseResamplerOptions{MaxErrRateP: &errRate})
 
 	rsmBatch := goresampler.NewResampleBatch(rsm, 8000, 16000)
 	rsmBatch.AddBatch(make([]int16, 1000))
@@ -549,7 +546,7 @@ func ExampleResampleBatch_ResampleAllInBuf() {
 	defer func() { _ = err }()
 
 	errRate := 1e-6 // fix err rate not to fail after change of it inside resampler
-	rsm, _, err := goresampler.NewResamplerAuto(8000, 16000, goresampler.ResamplerBestFitT, &errRate)
+	rsm, _, err := goresampler.NewResamplerAuto(8000, 16000, goresampler.ResamplerBestFitT, &goresampler.BaseResamplerOptions{MaxErrRateP: &errRate})
 
 	rsmBatch := goresampler.NewResampleBatch(rsm, 8000, 16000)
 	err = rsmBatch.AddBatch(make([]int16, 1000))

@@ -8,7 +8,7 @@ import (
 	"github.com/lehatrutenb/goresampler/internal/utils"
 )
 
-const minInAmt = 30 //  to reduce infl from edges to spline
+const SplineMinInAmt = 30 //  to reduce infl from edges to spline
 
 type borderCond struct {
 	c_0, c_n      float32
@@ -35,14 +35,14 @@ returns configured resampler
 if you use New with last arg maxErrRateP=nil - ignore ok value if err doesn't matter (but it can't be large)
 
 try to find batch input amt to have less err (0..1) rate than given maxErrRateP
-if failed to find such batch to fit maxErrRate,  second arg is false, otherwise true (but even with false, resampler is fine to use)
+if failed to find such batch to fit maxErrRate,  second arg is false, otherwise true (but even with false, resampler is still fine to use)
 */
-func NewResamplerSpline(inRate, outRate int, maxErrRateP *float64) (ResamplerSpline, bool) {
-	var maxErrRate = baseTimeErrRate
-	if maxErrRateP != nil {
-		maxErrRate = *maxErrRateP
+func NewResamplerSpline(inRate, outRate int, opts *BaseResamplerOptions) (ResamplerSpline, bool) {
+	if opts == nil {
+		opts = &BaseResamplerOptions{}
 	}
-	bInAmt, bOutAmt, ok := ResamplerSplineCalcInAmtPerErrRate(maxErrRate, inRate, outRate)
+	opts.Init()
+	bInAmt, bOutAmt, ok := resampleutils.CalcInAmtPerErrRate(*opts.MaxErrRateP, inRate, outRate, SplineMinInAmt)
 	return ResamplerSpline{inRate: inRate, outRate: outRate, bc: borderCond{0, 0, 0, 0, 2, 2}, batchInAmt: bInAmt, batchOutAmt: bOutAmt}, ok
 }
 
@@ -131,51 +131,16 @@ func rateToSplineStep(rate int) float64 {
 	return 1 / float64(rate)
 }
 
-/*
-try to find batch input amt to have less err (0..1) rate than given
-
-Calculations:
-
-	maxErr = given err rate
-	valExp = inSamplesAmt*outRate / inRate
-	valGet = math.Round(valExp)
-	minV = min(valExp, valGet)
-	maxV = max(valExp, valGet)
-	minV*(maxErr+1) >= maxV
-
-return false if failes to find such value < 1e5 and best value found
-return true if find such value
-*/
-func ResamplerSplineCalcInAmtPerErrRate(maxErr float64, inRate int, outRate int) (bInAmt, bOutAmt int, ok bool) {
-	bInAmt = minInAmt
-	bOutAmt = resampleutils.GetOutAmtPerInAmt(inRate, outRate, bInAmt)
-	bErr := 1e9
-	for inAmt := minInAmt; inAmt < 1e5; inAmt++ {
-		vMin, vMax := resampleutils.GetMinMaxSmplsAmt(inRate, outRate, int64(inAmt))
-
-		if resampleutils.CheckErrMinMax(vMin, vMax, maxErr) {
-			return inAmt, resampleutils.GetOutAmtPerInAmt(inRate, outRate, inAmt), true
-		}
-		if vMin/vMax < bErr {
-			bErr = vMin / vMax
-			bInAmt = inAmt
-		}
-	}
-
-	bOutAmt = resampleutils.GetOutAmtPerInAmt(inRate, outRate, bInAmt)
-	return bInAmt, bOutAmt, false
-}
-
-func (sw ResamplerSpline) CalcNeedSamplesPerOutAmt(outAmt int) int {
-	return ((outAmt + sw.batchOutAmt - 1) / sw.batchOutAmt) * sw.batchInAmt
+func (sw ResamplerSpline) CalcNeedSamplesPerOutAmt(outAmt int64) int64 {
+	return ((outAmt + int64(sw.batchOutAmt) - 1) / int64(sw.batchOutAmt)) * int64(sw.batchInAmt)
 }
 
 // not really need so strict - like inAmt % sw.batchInAmt == 0 , but it's garanted
-func (sw ResamplerSpline) calcOutSamplesPerInAmt(inAmt int) int {
-	return (inAmt * sw.batchOutAmt) / sw.batchInAmt
+func (sw ResamplerSpline) calcOutSamplesPerInAmt(inAmt int64) int64 {
+	return (inAmt * int64(sw.batchOutAmt)) / int64(sw.batchInAmt)
 }
 
-func (rsm ResamplerSpline) CalcInOutSamplesPerOutAmt(outAmt int) (int, int) {
+func (rsm ResamplerSpline) CalcInOutSamplesPerOutAmt(outAmt int64) (int64, int64) {
 	in := rsm.CalcNeedSamplesPerOutAmt(outAmt)
 	return in, rsm.calcOutSamplesPerInAmt(in)
 }
@@ -207,8 +172,8 @@ func (sw ResamplerSpline) ResampleAll(in, out []int16) error {
 
 func (sw ResamplerSpline) Resample(in, out []int16) error {
 	{
-		cIn, cOut := sw.CalcInOutSamplesPerOutAmt(len(out))
-		if cIn != len(in) || cOut != len(out) {
+		cIn, cOut := sw.CalcInOutSamplesPerOutAmt(int64(len(out)))
+		if cIn != int64(len(in)) || cOut != int64(len(out)) {
 			return ErrIncorrectInLen
 		}
 	}
